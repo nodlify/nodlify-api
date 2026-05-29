@@ -54,10 +54,10 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-security-oauth2-authorization-server'
 
     // swagger support
-    implementation "org.springdoc:springdoc-openapi-starter-webmvc-ui:${springdocVersion}"
+    implementation "org.springdoc:springdoc-openapi-starter-webmvc-ui:3.0.0"
 
     // hypersistence
-    implementation "io.hypersistence:hypersistence-utils-hibernate-73:${hypersistenceVersion}"
+    implementation "io.hypersistence:hypersistence-utils-hibernate-73:3.15.1"
 
     // test
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
@@ -84,7 +84,7 @@ dependencies {
     testImplementation 'org.testcontainers:testcontainers-spock'
 
     // okHttp
-    implementation(platform("com.squareup.okhttp3:okhttp-bom:${okHttpVersion}"))
+    implementation(platform("com.squareup.okhttp3:okhttp-bom:4.12.0"))
     implementation "com.squareup.okhttp3:okhttp"
     implementation "com.squareup.okhttp3:logging-interceptor"
 
@@ -92,14 +92,14 @@ dependencies {
     testImplementation "com.squareup.okhttp3:mockwebserver"
 
     // groovy
-    testImplementation "org.apache.groovy:groovy-all:${groovyVersion}"
+    testImplementation "org.apache.groovy:groovy-all:5.0.2"
 
     // apache commons
-    implementation "org.apache.commons:commons-lang3:${apacheCommonsVersion}"
+    implementation "org.apache.commons:commons-lang3:3.18.0"
 
     // spock
-    testImplementation "org.spockframework:spock-core:${spockVersion}"
-    testImplementation "org.spockframework:spock-spring:${spockVersion}"
+    testImplementation "org.spockframework:spock-core:2.4-groovy-5.0"
+    testImplementation "org.spockframework:spock-spring:2.4-groovy-5.0"
 
     // junit launcher
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
@@ -116,7 +116,7 @@ hibernate {
 
 dependencyManagement {
     imports {
-        mavenBom "org.springframework.modulith:spring-modulith-bom:${springModulithVersion}"
+        mavenBom "org.springframework.modulith:spring-modulith-bom:2.0.6"
     }
 }
 
