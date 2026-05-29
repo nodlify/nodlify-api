@@ -57,7 +57,7 @@ dependencies {
     implementation "org.springdoc:springdoc-openapi-starter-webmvc-ui:3.0.0"
 
     // hypersistence
-    implementation "io.hypersistence:hypersistence-utils-hibernate-73:3.15.1"
+    implementation "io.hypersistence:hypersistence-utils-hibernate-73:3.15.2"
 
     // test
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
