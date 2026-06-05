@@ -1,6 +1,6 @@
 spring:
   application:
-    name: pickdate
+    name: nodlify
 
   docker:
     compose:
@@ -12,16 +12,16 @@ spring:
       ddl-auto: validate
     properties:
       hibernate:
-        default_schema: pickdate
+        default_schema: nodlify
         jdbc:
           time_zone: UTC
         show_sql: false
 
   datasource:
-    url: jdbc:postgresql://${PICKDATE_DATABASE_URL:localhost:5432/pickdate}?currentSchema=pickdate
-    username: ${PICKDATE_DATABASE_USER:root}
-    password: ${PICKDATE_DATABASE_PASS:pass}
-    name: pickdate
+    url: jdbc:postgresql://${NODLIFYDATABASE_URL:localhost:5432/nodlify}?currentSchema=nodlify
+    username: ${NODLIFYDATABASE_USER:root}
+    password: ${NODLIFYDATABASE_PASS:pass}
+    name: nodlify
     hikari:
       maximum-pool-size: 20
 
@@ -29,14 +29,14 @@ spring:
     enabled: true
     baseline-on-migrate: true
     validate-on-migrate: true
-    schemas: pickdate
-    default-schema: pickdate
+    schemas: nodlify
+    default-schema: nodlify
     create-schemas: true
 
   modulith:
     events:
       jdbc:
-        schema: pickdate
+        schema: nodlify
 
   web:
     error:
@@ -74,10 +74,10 @@ management:
 server:
   forward-headers-strategy: framework
 
-pickdate:
+nodlify:
   version: '@application.version@'
   keys:
-    remember-me-key: ${PICKDATE_REMEMBER_ME_KEY:none}
+    remember-me-key: ${NODLIFY_REMEMBER_ME_KEY:none}
   geocoding:
     base-url: ${GEOCODING_BASE_URL:https://nominatim.openstreetmap.org}
     user-agent: ${GEOCODING_USER_AGENT:nodlify (rafal.kawczynski@outlook.com)}
