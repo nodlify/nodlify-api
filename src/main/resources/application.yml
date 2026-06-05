@@ -18,9 +18,9 @@ spring:
         show_sql: false
 
   datasource:
-    url: jdbc:postgresql://${NODLIFYDATABASE_URL:localhost:5432/nodlify}?currentSchema=nodlify
-    username: ${NODLIFYDATABASE_USER:root}
-    password: ${NODLIFYDATABASE_PASS:pass}
+    url: jdbc:postgresql://${NODLIFY_DATABASE_URL:localhost:5432/nodlify}?currentSchema=nodlify
+    username: ${NODLIFY_DATABASE_USER:root}
+    password: ${NODLIFY_DATABASE_PASS:pass}
     name: nodlify
     hikari:
       maximum-pool-size: 20
