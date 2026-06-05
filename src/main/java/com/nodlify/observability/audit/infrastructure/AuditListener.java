@@ -18,7 +18,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Slf4j
 @Component
 @AllArgsConstructor
-@ConditionalOnProperty(name = "picknodlifydate.observability.audit.enabled", havingValue = "true")
+@ConditionalOnProperty(name = "nodlify.observability.audit.enabled", havingValue = "true")
 class AuditListener {
 
     private final AuditEventUseCase auditEventUseCase;
