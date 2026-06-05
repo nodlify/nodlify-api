@@ -75,5 +75,13 @@ server:
   forward-headers-strategy: framework
 
 pickdate:
+  version: '@application.version@'
   keys:
     remember-me-key: ${PICKDATE_REMEMBER_ME_KEY:none}
+  geocoding:
+    base-url: ${GEOCODING_BASE_URL:https://nominatim.openstreetmap.org}
+    user-agent: ${GEOCODING_USER_AGENT:nodlify (rafal.kawczynski@outlook.com)}
+    search-limit: 5
+    rate-limit-enabled: ${GEOCODING_RATE_LIMIT_ENABLED:true}
+    rate-limit-max-requests: ${GEOCODING_RATE_LIMIT_MAX_REQUESTS:60}
+    rate-limit-window: ${GEOCODING_RATE_LIMIT_WINDOW:1m}

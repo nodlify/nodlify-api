@@ -6,12 +6,14 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.With;
+import org.springframework.data.annotation.CreatedBy;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.Instant;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import static jakarta.persistence.CascadeType.ALL;
@@ -34,6 +36,10 @@ public class Poll {
 
     private Description description;
 
+    private Instant votingDeadline;
+
+    private boolean requireParticipantNames = true;
+
     @OneToOne(cascade = ALL, orphanRemoval = true)
     @JoinColumn(name = "location_id", referencedColumnName = "id")
     private GeoLocation location;
@@ -54,6 +60,9 @@ public class Poll {
     )
     private Set<Participant> participants = new HashSet<>();
 
+    @CreatedBy
+    private String createdBy;
+
     @CreatedDate
     private Instant createdAt;
 
@@ -65,6 +74,18 @@ public class Poll {
         poll.title = title;
         poll.description = description;
         return poll;
+    }
+
+    public static Poll from(Title title, Description description, Instant votingDeadline, boolean requireParticipantNames) {
+        var poll = from(title, description);
+        poll.votingDeadline = votingDeadline;
+        poll.requireParticipantNames = requireParticipantNames;
+        return poll;
+    }
+
+    public void updateDetails(Title title, Description description) {
+        this.title = title;
+        this.description = description;
     }
 
     public void addOption(TimeRange timeRange, boolean wholeDay) {
@@ -79,6 +100,10 @@ public class Poll {
 
     public void addOption(Option option) {
         options.add(option);
+    }
+
+    public void addOptions(List<Option> options) {
+        this.options.addAll(options);
     }
 
     public void removeOption(Identifier optionId) {

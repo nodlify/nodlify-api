@@ -15,7 +15,10 @@ class PollFixture {
     public static String DESCRIPTION = "some description"
     public static boolean WHOLE_DAY = true
     public static boolean NOT_WHOLE_DAY = false
+    public static Instant VOTING_DEADLINE = Instant.parse("2026-06-15T00:00:00Z")
+    public static boolean REQUIRE_PARTICIPANT_NAMES = true
     public static final DisplayName DISPLAY_NAME = DisplayName.of("John")
+    public static final Instant CREATED_AT = Instant.now()
 
     public static List<ParticipantData> PARTICIPANTS = []
 
@@ -53,13 +56,20 @@ class PollFixture {
             )
     ]
 
+    public static String ORGANIZER = "john@pickdate.com"
+
     static PollData somePollData() {
         new PollData(
                 ID,
                 TITLE,
                 DESCRIPTION,
+                VOTING_DEADLINE,
+                REQUIRE_PARTICIPANT_NAMES,
                 PARTICIPANTS,
-                OPTIONS
+                OPTIONS,
+                CREATED_AT,
+                ORGANIZER,
+                null
         )
     }
 
@@ -67,7 +77,9 @@ class PollFixture {
         """
             {
                 "title": "$TITLE",
-                "description": "$DESCRIPTION"
+                "description": "$DESCRIPTION",
+                "votingDeadline": "$VOTING_DEADLINE",
+                "requireParticipantNames": $REQUIRE_PARTICIPANT_NAMES
             }
         """
     }

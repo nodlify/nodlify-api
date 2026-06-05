@@ -25,7 +25,7 @@ class SetupApiIntegrationSpec extends Specification {
 
     def "should create initial admin user"() {
         given:
-        def request = new CreateUserRequest("admin@email.com", "superSecretPassword!")
+        def request = new CreateUserRequest("admin@email.com", "superSecretPassword!", "Admin")
 
         when:
         def responseEntity = setupApi.initializeAdminUser(request)

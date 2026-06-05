@@ -42,7 +42,7 @@ class SetupApiMvcSpec extends MvcSpec implements JsonMapper {
 
     def "should create initial admin user"() {
         given:
-        def request = new CreateUserRequest("email@email.com", "Password1")
+        def request = new CreateUserRequest("email@email.com", "Password1", "Admin")
 
         when:
         def response = mvc.perform(post("/api/v1/iam/setup/admin")
@@ -74,7 +74,7 @@ class SetupApiMvcSpec extends MvcSpec implements JsonMapper {
 
     def "should return 400, when value is invalid"() {
         given:
-        def request = new CreateUserRequest("incorrect@", "superSecretPass!")
+        def request = new CreateUserRequest("incorrect@", "superSecretPass!", "Admin")
 
         when:
         def response = mvc.perform(post("/api/v1/iam/setup/admin")

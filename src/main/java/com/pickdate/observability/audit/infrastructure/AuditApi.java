@@ -5,7 +5,6 @@ import com.pickdate.observability.audit.application.AuditLogFilter;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -26,8 +25,7 @@ import static org.springframework.format.annotation.DateTimeFormat.ISO.DATE_TIME
 @RestController
 @RequestMapping("/api/v1/observability/audit")
 @AllArgsConstructor
-@Tag(name = "Audit", description = "Audit events")
-@SecurityRequirement(name = "basicAuth")
+@Tag(name = "Admin - Audit", description = "Audit event endpoints")
 class AuditApi {
 
     private AuditEventUseCase auditEventUseCase;

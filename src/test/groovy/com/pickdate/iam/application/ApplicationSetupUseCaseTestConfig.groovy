@@ -2,15 +2,14 @@ package com.pickdate.iam.application
 
 
 import com.pickdate.test.stub.ApplicationSetupRepositoryFake
-import com.pickdate.test.stub.UserRepositoryFake
 
 
 class ApplicationSetupUseCaseTestConfig {
 
     static final def setupRepo = new ApplicationSetupRepositoryFake()
-    static final def userRepo = new UserRepositoryFake()
+    static final def userUseCase = UserUseCaseTestConfig.userUseCase()
 
     static ApplicationSetupUseCase applicationSetupUseCase() {
-        new ApplicationSetupService(setupRepo, userRepo)
+        new ApplicationSetupService(setupRepo, userUseCase)
     }
 }

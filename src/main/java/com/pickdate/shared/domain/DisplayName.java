@@ -10,6 +10,8 @@ import java.util.regex.Pattern;
 
 public class DisplayName implements Value<String> {
 
+    public static final DisplayName EMPTY = new DisplayName();
+
     private static final Pattern pattern = Pattern.compile("^[\\p{L}\\p{M}0-9][\\p{L}\\p{M}0-9 ._\\-']*$");
 
     @Getter
@@ -26,6 +28,10 @@ public class DisplayName implements Value<String> {
         var newValue = value == null ? null : value.strip();
         validate(newValue);
         return new DisplayName(newValue);
+    }
+
+    public static DisplayName ofNullable(String value) {
+        return value == null ? EMPTY : of(value);
     }
 
     private static void validate(String value) {

@@ -4,7 +4,6 @@ import com.pickdate.poll.application.VoteData;
 import com.pickdate.poll.application.VoteUseCase;
 import com.pickdate.shared.domain.Identifier;
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -18,8 +17,7 @@ import static org.springframework.http.HttpStatus.CREATED;
 @RestController
 @RequestMapping("/api/v1/polls/{pollId}/votes")
 @RequiredArgsConstructor
-@Tag(name = "Votes", description = "Cast and list votes for a poll")
-@SecurityRequirement(name = "basicAuth")
+@Tag(name = "Public - Votes", description = "Poll voting endpoints")
 class VoteApi {
 
     private final VoteUseCase voteUseCase;

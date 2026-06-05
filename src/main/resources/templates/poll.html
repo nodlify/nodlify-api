@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="en"
+      xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout/main :: layout(
+          title=~{::title},
+          header=~{::header},
+          content=~{::main},
+          footer=~{fragments/footer :: footerMinimal},
+          scripts=~{::script}
+      )}"
+>
+<head>
+    <title>Manage poll · Nodlify</title>
+</head>
+<body>
+
+<header th:fragment="header" class="cp-nav">
+    <div class="wrap cp-nav-inner">
+        <a href="/home" class="cp-back"><span class="arrow inline-block rotate-180">→</span> Back to my polls</a>
+        <a href="/"><span class="logo">nodlify<span class="dot">.</span></span></a>
+        <span class="cp-step-meta">Manage</span>
+    </div>
+</header>
+
+<div th:fragment="main" x-data="pollPage()" x-init="init()" th:data-poll-id="${pollId}">
+
+    <div x-show="loading" x-cloak>
+        <div class="wrap">
+            <div class="cp-header">
+                <span class="eyebrow">Loading…</span>
+                <h1>Fetching your poll</h1>
+            </div>
+        </div>
+    </div>
+
+    <div x-show="!loading && error" x-cloak>
+        <div class="wrap">
+            <div class="cp-header">
+                <span class="eyebrow">Something went wrong</span>
+                <h1 x-text="error"></h1>
+                <p><a href="/home" class="cp-back">→ Back to my polls</a></p>
+            </div>
+        </div>
+    </div>
+
+    <div x-show="!loading && !error" x-cloak>
+        <div class="wrap" style="padding-bottom: 120px;">
+            <div class="cp-layout cp-layout-single">
+                <div class="cp-form">
+
+                    <div class="cp-header">
+                        <span class="eyebrow">Manage poll</span>
+                        <h1 x-text="title"></h1>
+                        <p x-show="description" x-text="description"></p>
+                    </div>
+
+                    <div class="cp-link-card mb-8 max-w-none">
+                        <span class="link-url flex-1 min-w-0" x-text="shareUrl"></span>
+                        <button class="btn btn-sm" type="button" @click="copyLink()"
+                                x-text="copied ? 'Copied' : 'Copy'">Copy
+                        </button>
+                    </div>
+
+                    <section class="cp-section">
+                        <div class="cp-section-head">
+                            <span class="cp-section-num">01</span>
+                            <h2 class="cp-section-title">Details</h2>
+                        </div>
+                        <p class="cp-section-hint">The name and note participants see at the top of the poll.</p>
+                        <input class="cp-input mb-2" x-model="form.title" maxlength="255" placeholder="Poll title"/>
+                        <textarea class="cp-textarea" x-model="form.description" maxlength="500"
+                                  placeholder="A note for participants (optional)"></textarea>
+                        <div class="flex flex-wrap items-center gap-2 mt-2">
+                            <button class="btn btn-sm" type="button"
+                                    :disabled="!detailsChanged || !detailsValid || busy"
+                                    :class="{ 'cursor-not-allowed opacity-40': !detailsChanged || !detailsValid || busy }"
+                                    @click="saveDetails()"
+                                    x-text="busy ? 'Saving…' : 'Save details'">Save details
+                            </button>
+                            <button class="btn btn-sm btn-ghost" type="button"
+                                    x-show="detailsChanged" @click="resetDetails()">Cancel
+                            </button>
+                        </div>
+                    </section>
+
+                    <section class="cp-section">
+                        <div class="cp-section-head">
+                            <span class="cp-section-num">02</span>
+                            <h2 class="cp-section-title">Date options</h2>
+                        </div>
+                        <p class="cp-section-hint">Add the times people vote on. Participants pick yes / no / maybe for
+                            each.</p>
+
+                        <div class="cp-opt-list">
+                            <template x-for="opt in options" :key="opt.optionId">
+                                <div :class="'cp-opt' + (opt.wholeDay ? ' allday' : '')">
+                                    <span class="cp-opt-handle">⋮⋮</span>
+                                    <span class="cp-opt-input" x-text="formatDay(opt.startAt)"></span>
+                                    <template x-if="!opt.wholeDay">
+                                        <span class="cp-opt-input time" x-text="formatTime(opt.startAt)"></span>
+                                    </template>
+                                    <template x-if="!opt.wholeDay">
+                                        <span class="cp-opt-input time" x-text="formatTime(opt.endAt)"></span>
+                                    </template>
+                                    <template x-if="opt.wholeDay">
+                                        <span class="allday-tag">All day</span>
+                                    </template>
+                                    <button class="cp-opt-remove" type="button"
+                                            :disabled="busy"
+                                            @click="removeOption(opt.optionId)" aria-label="Remove">×
+                                    </button>
+                                </div>
+                            </template>
+
+                            <template x-for="(draft, i) in drafts" :key="'draft-' + i">
+                                <div :class="'cp-opt' + (draft.allDay ? ' allday' : '')">
+                                    <span class="cp-opt-handle">+</span>
+                                    <input type="date" class="cp-opt-input"
+                                           :value="draft.date"
+                                           @change="drafts[i].date = $event.target.value"/>
+                                    <template x-if="!draft.allDay">
+                                        <input type="time" class="cp-opt-input time"
+                                               :value="draft.start"
+                                               @change="drafts[i].start = $event.target.value"/>
+                                    </template>
+                                    <template x-if="!draft.allDay">
+                                        <input type="time" class="cp-opt-input time"
+                                               :value="draft.end"
+                                               @change="drafts[i].end = $event.target.value"/>
+                                    </template>
+                                    <template x-if="draft.allDay">
+                                        <span class="allday-tag">All day</span>
+                                    </template>
+                                    <div class="flex items-center gap-1">
+                                        <button class="cp-opt-remove" type="button"
+                                                :disabled="busy || !draft.date"
+                                                @click="saveDraft(i)" aria-label="Save" title="Save">✓
+                                        </button>
+                                        <button class="cp-opt-remove" type="button"
+                                                @click="removeDraft(i)" aria-label="Discard">×
+                                        </button>
+                                    </div>
+                                </div>
+                            </template>
+                        </div>
+
+                        <p x-show="options.length === 0 && drafts.length === 0" class="cp-section-hint">
+                            No dates yet — add the first one below.
+                        </p>
+
+                        <div class="mt-2 flex flex-wrap gap-2">
+                            <button class="cp-opt-add" type="button" @click="addDraft(false)">
+                                <span class="plus">+</span> Add time range
+                            </button>
+                            <button class="cp-opt-add" type="button" @click="addDraft(true)">
+                                <span class="plus">+</span> Add whole‑day option
+                            </button>
+                        </div>
+                    </section>
+
+                </div>
+            </div>
+        </div>
+
+        <div class="cp-bottom">
+            <div class="wrap cp-bottom-inner">
+                <div class="cp-status">
+                    <span class="summary"
+                          x-text="options.length + ' date' + (options.length === 1 ? '' : 's') + ' published'"></span>
+                    <span class="small" x-show="drafts.length > 0" x-text="drafts.length + ' unsaved'"></span>
+                </div>
+                <a :href="'/vote/' + pollId" class="btn">Preview voting page <span class="arrow">→</span></a>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<script th:fragment="script">
+    function pollPage() {
+        function todayPlus(days) {
+            const d = new Date();
+            d.setDate(d.getDate() + days);
+            return d.toISOString().slice(0, 10);
+        }
+
+        return {
+            pollId: '',
+            title: '',
+            description: '',
+            options: [],
+            form: {title: '', description: ''},
+            drafts: [],
+            loading: true,
+            busy: false,
+            error: '',
+            copied: false,
+
+            init() {
+                this.pollId = this.$el.dataset.pollId;
+                this.loadPoll();
+            },
+
+            get shareUrl() {
+                return window.location.origin + '/vote/' + this.pollId;
+            },
+            get detailsValid() {
+                return this.form.title.trim().length >= 3;
+            },
+            get detailsChanged() {
+                return this.form.title !== this.title
+                        || (this.form.description || '') !== (this.description || '');
+            },
+
+            csrfHeaders() {
+                const token = document.querySelector('meta[name="_csrf"]')?.content;
+                const header = document.querySelector('meta[name="_csrf_header"]')?.content;
+                const headers = {'Content-Type': 'application/json', 'Accept': 'application/json'};
+                if (token && header) headers[header] = token;
+                return headers;
+            },
+
+            applyOptions(list) {
+                this.options = (list || []).slice()
+                        .sort((a, b) => new Date(a.startAt) - new Date(b.startAt));
+            },
+
+            async loadPoll() {
+                try {
+                    const res = await fetch('/api/v1/polls/' + encodeURIComponent(this.pollId),
+                            {headers: {'Accept': 'application/json'}, credentials: 'same-origin'});
+                    if (!res.ok) {
+                        this.error = res.status === 404 ? 'Poll not found.' : 'Could not load this poll.';
+                        return;
+                    }
+                    const data = await res.json();
+                    this.title = data.title;
+                    this.description = data.description || '';
+                    this.form.title = this.title;
+                    this.form.description = this.description;
+                    this.applyOptions((data.optionGroups || []).flatMap(group => group.options || []));
+                } catch (_) {
+                    this.error = 'Could not load this poll.';
+                } finally {
+                    this.loading = false;
+                }
+            },
+
+            resetDetails() {
+                this.form.title = this.title;
+                this.form.description = this.description;
+            },
+
+            async saveDetails() {
+                if (!this.detailsValid || !this.detailsChanged || this.busy) return;
+                this.busy = true;
+                this.error = '';
+                try {
+                    const res = await fetch('/api/v1/polls/' + encodeURIComponent(this.pollId), {
+                        method: 'PATCH',
+                        headers: this.csrfHeaders(),
+                        credentials: 'same-origin',
+                        body: JSON.stringify({
+                            title: this.form.title.trim(),
+                            description: this.form.description.trim() || null,
+                        }),
+                    });
+                    if (!res.ok) {
+                        this.error = 'Could not save the details.';
+                        return;
+                    }
+                    const data = await res.json();
+                    this.title = data.title;
+                    this.description = data.description || '';
+                    this.form.title = this.title;
+                    this.form.description = this.description;
+                } catch (_) {
+                    this.error = 'Could not save the details.';
+                } finally {
+                    this.busy = false;
+                }
+            },
+
+            addDraft(allDay) {
+                const lastDate = this.drafts.length
+                        ? this.drafts[this.drafts.length - 1].date
+                        : (this.options.length ? this.options[this.options.length - 1].startAt.slice(0, 10) : todayPlus(5));
+                let nextDate = todayPlus(5);
+                if (lastDate) {
+                    const d = new Date(lastDate + 'T00:00:00');
+                    d.setDate(d.getDate() + 1);
+                    nextDate = d.toISOString().slice(0, 10);
+                }
+                this.drafts.push({date: nextDate, start: '18:00', end: '19:30', allDay});
+            },
+
+            removeDraft(i) {
+                this.drafts.splice(i, 1);
+            },
+
+            toPayload(draft) {
+                if (draft.allDay) {
+                    return {startAt: draft.date + 'T00:00:00Z', endAt: draft.date + 'T23:59:59Z', wholeDay: true};
+                }
+                return {
+                    startAt: draft.date + 'T' + draft.start + ':00Z',
+                    endAt: draft.date + 'T' + draft.end + ':00Z',
+                    wholeDay: false,
+                };
+            },
+
+            async saveDraft(i) {
+                const draft = this.drafts[i];
+                if (!draft.date || this.busy) return;
+                this.busy = true;
+                this.error = '';
+                try {
+                    const res = await fetch('/api/v1/polls/' + encodeURIComponent(this.pollId) + '/options', {
+                        method: 'POST',
+                        headers: this.csrfHeaders(),
+                        credentials: 'same-origin',
+                        body: JSON.stringify(this.toPayload(draft)),
+                    });
+                    if (!res.ok) {
+                        this.error = 'Could not add this date.';
+                        return;
+                    }
+                    const data = await res.json();
+                    this.applyOptions(data.options);
+                    this.drafts.splice(i, 1);
+                } catch (_) {
+                    this.error = 'Could not add this date.';
+                } finally {
+                    this.busy = false;
+                }
+            },
+
+            async removeOption(optionId) {
+                if (this.busy) return;
+                this.busy = true;
+                this.error = '';
+                try {
+                    const res = await fetch(
+                            '/api/v1/polls/' + encodeURIComponent(this.pollId) + '/options/' + encodeURIComponent(optionId), {
+                                method: 'DELETE',
+                                headers: this.csrfHeaders(),
+                                credentials: 'same-origin',
+                            });
+                    if (!res.ok && res.status !== 204) {
+                        this.error = 'Could not remove this date.';
+                        return;
+                    }
+                    this.options = this.options.filter(o => o.optionId !== optionId);
+                } catch (_) {
+                    this.error = 'Could not remove this date.';
+                } finally {
+                    this.busy = false;
+                }
+            },
+
+            formatDay(iso) {
+                return new Date(iso).toLocaleDateString(undefined,
+                        {weekday: 'short', month: 'short', day: 'numeric'});
+            },
+
+            formatTime(iso) {
+                return new Date(iso).toLocaleTimeString(undefined,
+                        {hour: '2-digit', minute: '2-digit'});
+            },
+
+            copyLink() {
+                navigator.clipboard.writeText(this.shareUrl);
+                this.copied = true;
+                setTimeout(() => this.copied = false, 1500);
+            },
+        };
+    }
+</script>
+
+</body>
+</html>

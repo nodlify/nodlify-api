@@ -76,12 +76,12 @@ class UserApiMvcSpec extends MvcSpec implements JsonMapper {
         def userData = toObject(response.contentAsString, UserData)
         userData.id() == user.id.value
         userData.email() == user.email.value
-        userData.authorities().contains("USER")
+        userData.roles().contains("USER")
     }
 
     def "should create user"() {
         given:
-        def request = new CreateUserRequest("email@email.com", "Password1")
+        def request = new CreateUserRequest("email@email.com", "Password1", "Admin")
 
         when:
         def response = mvc.perform(post("/api/v1/iam/users")
@@ -104,7 +104,7 @@ class UserApiMvcSpec extends MvcSpec implements JsonMapper {
 
     def "should return 400, when value is invalid"() {
         given:
-        def request = new CreateUserRequest("incorrect@", "Password1")
+        def request = new CreateUserRequest("incorrect@", "Password1", "Admin")
 
         when:
         def response = mvc.perform(post("/api/v1/iam/users")

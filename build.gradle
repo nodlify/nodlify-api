@@ -3,7 +3,9 @@ plugins {
     id 'org.springframework.boot' version '4.0.6'
     id 'io.spring.dependency-management' version '1.1.7'
     id 'com.github.ben-manes.versions' version '0.54.0'
+    id "com.gorylenko.gradle-git-properties" version "4.0.1"
     id 'org.hibernate.orm' version '7.4.0.Final'
+    id 'tailwind-conventions'
     id 'jacoco'
 //	id 'org.graalvm.buildtools.native' version '0.10.6'
 }
@@ -11,9 +13,21 @@ plugins {
 group = 'com.pickdate'
 version = '0.2.0'
 
+tailwind {
+    version = '3.4.17'
+}
+
 java {
     toolchain {
         languageVersion = JavaLanguageVersion.of(25)
+    }
+}
+
+sourceSets {
+    main {
+        resources {
+            srcDir(layout.buildDirectory.dir('generated/tailwind'))
+        }
     }
 }
 
@@ -122,6 +136,24 @@ dependencyManagement {
 
 tasks.named('test') {
     useJUnitPlatform()
+}
+
+version = providers
+        .gradleProperty('applicationVersion')
+        .orElse('dev-build')
+        .get()
+
+def applicationVersion = version.toString()
+
+processResources {
+    dependsOn 'buildTailwind'
+    exclude 'tailwind/**'
+
+    filesMatching('application.yml') {
+        filter { line ->
+            line.replace('@application.version@', applicationVersion)
+        }
+    }
 }
 
 jacocoTestReport {

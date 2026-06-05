@@ -11,6 +11,9 @@ import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Instant;
+import java.util.List;
+
 
 @Service
 @Transactional
@@ -23,19 +26,48 @@ public class PollService implements PollUseCase {
     @Override
     @CacheEvict(allEntries = true)
     public PollData createPoll(Title title, Description description) {
-        var poll = Poll.from(title, description);
+        return createPoll(title, description, null, List.of());
+    }
+
+    @Override
+    @CacheEvict(allEntries = true)
+    public PollData createPoll(
+            Title title,
+            Description description,
+            LocationDetails location,
+            List<Option> options
+    ) {
+        return createPoll(title, description, location, options, null, true);
+    }
+
+    @Override
+    @CacheEvict(allEntries = true)
+    public PollData createPoll(
+            Title title,
+            Description description,
+            LocationDetails location,
+            List<Option> options,
+            Instant votingDeadline,
+            boolean requireParticipantNames
+    ) {
+        var poll = Poll.from(title, description, votingDeadline, requireParticipantNames);
+        if (location != null) {
+            poll.addLocation(GeoLocation.of(location));
+        }
+        poll.addOptions(options);
+
         var saved = repository.save(poll);
         return PollMapper.toPollData(saved);
     }
 
     @Override
-    @CacheEvict(key = "#pollId.value()")
+    @CacheEvict(key = "#pollId.value")
     public void deletePoll(Identifier pollId) {
         repository.deleteById(pollId);
     }
 
     @Override
-    @CacheEvict(key = "#pollId.value()")
+    @CacheEvict(key = "#pollId.value")
     public PollData registerParticipant(Identifier pollId, Participant participant) {
         var poll = findPoll(pollId);
         poll.addParticipant(participant);
@@ -44,16 +76,25 @@ public class PollService implements PollUseCase {
     }
 
     @Override
-    @CacheEvict(key = "#pollId.value()")
-    public PollData addOption(Identifier pollId, TimeRange timeRange, boolean wholeDay) {
+    @CacheEvict(key = "#pollId.value")
+    public PollData updateDetails(Identifier pollId, Title title, Description description) {
         var poll = findPoll(pollId);
-        poll.addOption(timeRange, wholeDay);
+        poll.updateDetails(title, description);
         repository.save(poll);
         return PollMapper.toPollData(poll);
     }
 
     @Override
-    @CacheEvict(key = "#pollId.value()")
+    @CacheEvict(key = "#pollId.value")
+    public PollData addOption(Identifier pollId, Option option) {
+        var poll = findPoll(pollId);
+        poll.addOption(option);
+        repository.save(poll);
+        return PollMapper.toPollData(poll);
+    }
+
+    @Override
+    @CacheEvict(key = "#pollId.value")
     public PollData removeOption(Identifier pollId, Identifier optionId) {
         var poll = findPoll(pollId);
         poll.removeOption(optionId);
@@ -62,7 +103,7 @@ public class PollService implements PollUseCase {
     }
 
     @Override
-    @Cacheable(key = "#id.value()")
+    @Cacheable(key = "#id.value")
     @Transactional(readOnly = true)
     public PollData getPoll(Identifier id) {
         var poll = findPoll(id);
@@ -70,7 +111,16 @@ public class PollService implements PollUseCase {
     }
 
     @Override
-    @CacheEvict(key = "#pollId.value()")
+    @Transactional(readOnly = true)
+    public List<PollData> getMyPolls(String owner) {
+        return repository.findByCreatedBy(owner)
+                .stream()
+                .map(PollMapper::toPollData)
+                .toList();
+    }
+
+    @Override
+    @CacheEvict(key = "#pollId.value")
     public PollData addLocation(Identifier pollId, LocationDetails location) {
         var poll = findPoll(pollId);
         var geoLocation = GeoLocation.of(location);

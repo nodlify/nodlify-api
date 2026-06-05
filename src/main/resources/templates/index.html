@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en"
+      xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout/main :: layout(
+          title=~{::title},
+          header=~{::header},
+          content=~{::main},
+          footer=~{fragments/footer :: footerFull},
+          scripts=~{::script}
+      )}"
+>
+<head>
+    <title>Nodlify – Pick a time together.</title>
+</head>
+<body>
+
+<header class="nav"
+        x-data="{ scrolled: false }"
+        x-init="window.addEventListener('scroll', () => scrolled = window.scrollY > 12, { passive: true })"
+        :class="{ scrolled: scrolled }">
+    <div class="wrap nav-inner">
+        <a href="/"><span class="logo">nodlify<span class="dot">.</span></span></a>
+        <div class="nav-cta">
+            <a href="/login" class="small text-[var(--muted)]">Sign in</a>
+            <a href="/create-poll" class="btn btn-sm">Create a poll <span class="arrow">→</span></a>
+        </div>
+    </div>
+</header>
+
+<main>
+
+    <section id="top" class="hero">
+        <div class="wrap">
+            <div class="hero-grid">
+                <div class="hero-left">
+                    <span class="eyebrow">Group scheduling made simple · v0.2</span>
+                    <h1 class="display hero-headline">
+                        Find a time<br/>
+                        <span class="inline-block">that works for</span> <span class="accent">everyone</span>.
+                    </h1>
+                    <p class="lede">
+                        Nodlify gives every group one clean link for choosing a date.
+                        Propose a few options, collect <b>yes / no / maybe</b> in one tap, and confirm the time
+                        that works best.
+                    </p>
+                    <div class="hero-cta flex-col items-start gap-2">
+                        <a href="/create-poll" class="btn">Create a poll for free <span class="arrow">→</span></a>
+                        <span class="small text-[12.5px] text-[var(--muted)]">Free · no account needed</span>
+                    </div>
+                </div>
+
+                <div class="hero-right justify-end items-center">
+                    <div class="poll-card floating w-full">
+                        <div class="poll-head">
+                            <h3 class="poll-title">Team dinner — November</h3>
+                            <div class="poll-meta-row">
+                                <span>8 invited</span>
+                                <span class="dot-sep"></span>
+                                <span>4 options</span>
+                                <span class="dot-sep"></span>
+                                <span class="mono text-[11px]">nodlify.com/p/4hT9k</span>
+                            </div>
+                        </div>
+                        <div class="poll-grid">
+                            <div class="poll-grid-header [grid-template-columns:1.3fr_1fr_1fr_1fr_1fr]">
+                                <div class="poll-cell-name header">Who</div>
+                                <div class="poll-cell-opt">
+                                    <div class="opt-date">Nov 18</div>
+                                    <div class="opt-time">18:00</div>
+                                </div>
+                                <div class="poll-cell-opt">
+                                    <div class="opt-date">Nov 19</div>
+                                    <div class="opt-time">18:30</div>
+                                </div>
+                                <div class="poll-cell-opt">
+                                    <div class="opt-date">Nov 20</div>
+                                    <div class="opt-time">19:00</div>
+                                </div>
+                                <div class="poll-cell-opt">
+                                    <div class="opt-date">Nov 21</div>
+                                    <div class="opt-time">18:00</div>
+                                </div>
+                            </div>
+                            <div class="poll-grid-row [grid-template-columns:1.3fr_1fr_1fr_1fr_1fr]">
+                                <div class="poll-cell-name"><span
+                                        class="avatar">AK</span><span>Ania</span></div>
+                                <div class="poll-cell-vote"><span class="vote-pip yes">✓</span></div>
+                                <div class="poll-cell-vote"><span class="vote-pip yes">✓</span></div>
+                                <div class="poll-cell-vote"><span class="vote-pip yes">✓</span></div>
+                                <div class="poll-cell-vote"><span class="vote-pip maybe">?</span></div>
+                            </div>
+                            <div class="poll-grid-row [grid-template-columns:1.3fr_1fr_1fr_1fr_1fr]">
+                                <div class="poll-cell-name"><span
+                                        class="avatar">MD</span><span>Marek</span></div>
+                                <div class="poll-cell-vote"><span class="vote-pip no">✕</span></div>
+                                <div class="poll-cell-vote"><span class="vote-pip yes">✓</span></div>
+                                <div class="poll-cell-vote"><span class="vote-pip yes">✓</span></div>
+                                <div class="poll-cell-vote"><span class="vote-pip yes">✓</span></div>
+                            </div>
+                            <div class="poll-grid-row [grid-template-columns:1.3fr_1fr_1fr_1fr_1fr]">
+                                <div class="poll-cell-name"><span
+                                        class="avatar">TL</span><span>Tomek</span></div>
+                                <div class="poll-cell-vote"><span class="vote-pip yes">✓</span></div>
+                                <div class="poll-cell-vote"><span class="vote-pip maybe">?</span></div>
+                                <div class="poll-cell-vote best"><span class="vote-pip yes">✓</span></div>
+                                <div class="poll-cell-vote"><span class="vote-pip yes">✓</span></div>
+                            </div>
+                        </div>
+                        <div class="poll-foot">
+                            <div class="totals">
+                                <span><b>14</b> yes</span>
+                                <span><b>3</b> maybe</span>
+                                <span><b>3</b> no</span>
+                            </div>
+                            <span class="mono text-[11px] text-[var(--muted)]">63% responded</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="pricing">
+        <div class="wrap">
+            <div class="section-head">
+                <span class="eyebrow">Pricing · no surprises</span>
+                <h2 class="h2">Free for most things. <i>Pro</i> for the rest.</h2>
+            </div>
+            <div class="pricing-grid">
+                <div class="price-card">
+                    <div>
+                        <div class="name">Free</div>
+                        <h3 class="amount">€0<span class="per">/forever</span></h3>
+                    </div>
+                    <p class="summary">Everything you need to coordinate small groups. No account required for
+                        participants.</p>
+                    <ul>
+                        <li>Unlimited polls</li>
+                        <li>Up to 30 participants per poll</li>
+                        <li>Yes / No / Maybe voting</li>
+                        <li>Location with map preview</li>
+                        <li>One‑click .ics calendar export</li>
+                    </ul>
+                    <div class="price-cta">
+                        <a href="/create-poll" class="btn btn-ghost">Start free <span class="arrow">→</span></a>
+                    </div>
+                </div>
+                <div class="price-card featured">
+                    <span class="tag">For teams</span>
+                    <div>
+                        <div class="name">Pro</div>
+                        <h3 class="amount">€6<span class="per">/month per organizer</span></h3>
+                    </div>
+                    <p class="summary">For people who schedule a lot. Adds calendar integrations, custom domains, and a
+                        real API.</p>
+                    <ul>
+                        <li>Everything in Free</li>
+                        <li>Unlimited participants</li>
+                        <li>Google &amp; Outlook calendar sync</li>
+                        <li>Custom subdomain (yours.nodlify.com)</li>
+                        <li>Full REST API + webhooks</li>
+                        <li>Priority email support</li>
+                    </ul>
+                    <div class="price-cta">
+                        <a href="/register" class="btn">Try Pro free for 14 days <span class="arrow">→</span></a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="cta-block">
+        <div class="wrap">
+            <span class="eyebrow mb-6 inline-flex">Ready when your group is</span>
+            <h2 class="h2 mt-4 text-[length:var(--hero-size)]">
+                Stop chasing replies.<br/>
+                <i class="text-[var(--yes)]">Choose the time.</i>
+            </h2>
+            <p class="lede mt-6">
+                Create your first poll in under 30 seconds. No credit card, no signup wall.
+            </p>
+            <div class="mt-8 flex flex-wrap justify-center gap-3">
+                <a href="/create-poll" class="btn">Create a poll <span class="arrow">→</span></a>
+                <a href="#" class="btn btn-ghost">Read the docs</a>
+            </div>
+            <p class="small mt-6">Free forever for groups up to 30 · Open source under MIT</p>
+        </div>
+    </section>
+
+</main>
+
+</body>
+</html>

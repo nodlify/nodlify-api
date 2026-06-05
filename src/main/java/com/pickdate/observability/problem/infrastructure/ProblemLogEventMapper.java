@@ -39,6 +39,7 @@ final class ProblemLogEventMapper {
                 .traceId(entity.getId().getValue())
                 .stackTrace(entity.getStackTrace())
                 .invalidParams(entity.getInvalidParams())
+                .createdAt(entity.getCreatedAt())
                 .build();
     }
 }

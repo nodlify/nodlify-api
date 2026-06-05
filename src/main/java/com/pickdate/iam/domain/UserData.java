@@ -8,13 +8,15 @@ import static com.pickdate.shared.domain.Value.valueOrNull;
 public record UserData(
         String id,
         String email,
-        List<String> authorities
+        String displayName,
+        List<String> roles
 ) {
 
     public static UserData from(User user) {
         return new UserData(
                 valueOrNull(user.getId()),
                 valueOrNull(user.getEmail()),
+                valueOrNull(user.getDisplayName()),
                 user.getAuthoritiesAsString()
         );
     }

@@ -14,10 +14,7 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 class SwaggerConfig {
 
-    private static final String[] ADMIN_PATHS = {
-            "/api/v1/iam/**",
-            "/api/v1/observability/**"
-    };
+    private static final String API_PATH_PATTERN = "/api/v1/**";
 
     @Bean
     public OpenAPI swaggerDocumentation() {
@@ -40,19 +37,11 @@ class SwaggerConfig {
     }
 
     @Bean
-    GroupedOpenApi userApiGroup() {
+    GroupedOpenApi apiGroup() {
         return GroupedOpenApi.builder()
-                .group("public api")
-                .pathsToExclude(ADMIN_PATHS)
-                .pathsToMatch("/api/v1/**")
-                .build();
-    }
-
-    @Bean
-    GroupedOpenApi adminApiGroup() {
-        return GroupedOpenApi.builder()
-                .group("admin api")
-                .pathsToMatch(ADMIN_PATHS)
+                .group("api")
+                .displayName("Pickdate API")
+                .pathsToMatch(API_PATH_PATTERN)
                 .build();
     }
 }

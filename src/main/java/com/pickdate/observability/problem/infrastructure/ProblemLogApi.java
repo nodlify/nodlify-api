@@ -5,7 +5,6 @@ import com.pickdate.observability.problem.application.ProblemLogUseCase;
 import com.pickdate.shared.exception.Problem;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.AllArgsConstructor;
 import org.springdoc.core.annotations.ParameterObject;
@@ -24,8 +23,7 @@ import static org.springframework.format.annotation.DateTimeFormat.ISO.DATE_TIME
 @RestController
 @RequestMapping("/api/v1/observability/problems")
 @AllArgsConstructor
-@Tag(name = "Problems", description = "Problem and error reporting endpoints")
-@SecurityRequirement(name = "basicAuth")
+@Tag(name = "Admin - Problems", description = "Problem and error reporting endpoints")
 class ProblemLogApi {
 
     private final ProblemLogUseCase problemLogUseCase;

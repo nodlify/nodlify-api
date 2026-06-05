@@ -4,11 +4,15 @@ package com.pickdate.iam.application;
 import com.pickdate.iam.domain.DomainUrl;
 import com.pickdate.iam.domain.User;
 
+import java.util.Optional;
+
 public interface ApplicationSetupUseCase {
 
     void setupDomain(DomainUrl domainUrl);
 
     boolean setupCompleted();
+
+    Optional<String> getDomainUrl();
 
     void completeSetup();
 

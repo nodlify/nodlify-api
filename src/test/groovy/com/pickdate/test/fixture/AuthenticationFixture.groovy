@@ -6,6 +6,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.authentication.event.AbstractAuthenticationFailureEvent
 import org.springframework.security.authentication.event.AuthenticationSuccessEvent
 import org.springframework.security.core.Authentication
+import org.springframework.security.core.authority.SimpleGrantedAuthority
 
 class AuthenticationFixture {
 
@@ -31,6 +32,16 @@ class AuthenticationFixture {
         authentication
     }
 
+    static UsernamePasswordAuthenticationToken authenticatedUser(String username = UserFixture.JOHN_EMAIL, Object details = null) {
+        def authentication = new UsernamePasswordAuthenticationToken(
+                username,
+                "secret",
+                [new SimpleGrantedAuthority("USER")]
+        )
+        authentication.details = details
+        authentication
+    }
+
     private static final class TestAuthenticationFailureEvent extends AbstractAuthenticationFailureEvent {
 
         TestAuthenticationFailureEvent(Authentication authentication) {
@@ -38,4 +49,3 @@ class AuthenticationFixture {
         }
     }
 }
-

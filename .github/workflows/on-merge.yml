@@ -64,7 +64,10 @@ jobs:
           validate-wrappers: false
 
       - name: Build
-        run: ./gradlew clean build jacocoTestReport --info --stacktrace
+        run: |
+          ./gradlew clean build jacocoTestReport \
+            -PapplicationVersion="${{ needs.prepare-env.outputs.version }}" \
+            --info --stacktrace
 
       - name: SonarCloud scan
         uses: SonarSource/sonarqube-scan-action@v7

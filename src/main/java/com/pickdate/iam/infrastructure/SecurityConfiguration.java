@@ -7,13 +7,14 @@ import com.nimbusds.jose.jwk.source.JWKSource;
 import com.nimbusds.jose.proc.SecurityContext;
 import com.pickdate.iam.application.ApplicationSetupUseCase;
 import com.pickdate.iam.domain.KeyProperties;
-import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Profile;
 import org.springframework.core.annotation.Order;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.security.authentication.AuthenticationEventPublisher;
@@ -40,19 +41,22 @@ import org.springframework.security.oauth2.server.authorization.client.Registere
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository;
 import org.springframework.security.oauth2.server.authorization.settings.AuthorizationServerSettings;
 import org.springframework.security.oauth2.server.authorization.settings.ClientSettings;
+import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.security.web.DefaultRedirectStrategy;
 import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.security.web.authentication.HttpStatusEntryPoint;
-import org.springframework.security.web.authentication.SimpleUrlAuthenticationFailureHandler;
+import org.springframework.security.web.authentication.*;
 import org.springframework.security.web.authentication.password.HaveIBeenPwnedRestApiPasswordChecker;
 import org.springframework.security.web.authentication.rememberme.TokenBasedRememberMeServices;
+import org.springframework.security.web.servlet.util.matcher.PathPatternRequestMatcher;
 import org.springframework.security.web.util.matcher.MediaTypeRequestMatcher;
 import org.springframework.security.web.util.matcher.RequestMatcher;
+import org.springframework.security.web.util.matcher.RequestMatcherEntry;
 
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.interfaces.RSAPrivateKey;
 import java.security.interfaces.RSAPublicKey;
+import java.util.List;
 import java.util.UUID;
 
 import static jakarta.servlet.DispatcherType.ERROR;
@@ -67,7 +71,6 @@ import static org.springframework.security.config.Customizer.withDefaults;
 @RequiredArgsConstructor
 class SecurityConfiguration {
 
-    private static final String[] ALLOW_LIST = {"/oauth2/token", "/userinfo"};
     private static final String[] SETUP_ENDPOINTS = {"/api/v1/iam/setup/**"};
 
     private final UserDetailsService userDetailsService;
@@ -83,7 +86,7 @@ class SecurityConfiguration {
                     authorizationServer.oidc(withDefaults());
                 })
                 .authorizeHttpRequests((authorize) -> authorize
-                        .requestMatchers(ALLOW_LIST).permitAll()
+                        .requestMatchers("/oauth2/token").permitAll()
                         .anyRequest().authenticated())
                 .exceptionHandling(exceptions -> {
                     // returns 401
@@ -103,18 +106,43 @@ class SecurityConfiguration {
     SecurityFilterChain defaultSecurityFilterChain(HttpSecurity http) {
         http
                 .csrf(csrf -> csrf.ignoringRequestMatchers(SETUP_ENDPOINTS))
+                .addFilterBefore(
+                        new SetupRedirectFilter(applicationSetupUseCase),
+                        UsernamePasswordAuthenticationFilter.class
+                )
+                .addFilterBefore(
+                        new AuthenticatedUserRedirectFilter(),
+                        UsernamePasswordAuthenticationFilter.class
+                )
                 .authorizeHttpRequests((authorize) -> authorize
                         .dispatcherTypeMatchers(FORWARD, ERROR).permitAll()
-                        .requestMatchers("/").permitAll()
-                        .requestMatchers("/static/**").permitAll()
-                        .requestMatchers("/login").permitAll()
-                        .requestMatchers("/debug/**").permitAll()
                         .requestMatchers(
-                                "/swagger-ui/**",
-                                "/v3/api-docs/**",
-                                "/actuator/health/**"
+                                // assets
+                                "/css/**",
+                                "/js/**",
+                                "/images/**",
+                                "/icons/**",
+                                "/favicon.ico",
+
+                                // browser/agent probes (e.g. Chrome devtools)
+                                "/.well-known/**",
+
+                                // public pages
+                                "/",
+                                "/login",
+                                "/register",
+                                "/setup",
+                                "/reset-password",
+
+                                // public participant voting page
+                                "/vote/**",
+
+                                // public api
+                                "/api/v1/userinfo"
+
                         ).permitAll()
-                        .requestMatchers("/reset-password").permitAll()
+                        // anyone with the link can open a poll to vote — no account needed
+                        .requestMatchers(HttpMethod.GET, "/api/v1/polls/*").permitAll()
                         .requestMatchers(SETUP_ENDPOINTS).access((authentication, _) -> {
                             if (!applicationSetupUseCase.setupCompleted()) {
                                 return new AuthorizationDecision(true);
@@ -129,23 +157,25 @@ class SecurityConfiguration {
                         })
                         .requestMatchers(
                                 "/api/v1/iam/**",
-                                "/api/v1/observability/**"
+                                "/api/v1/observability/**",
+                                "/observability/**",
+                                "/admin/**",
+                                "/admin"
                         ).hasAuthority("ADMIN")
-                        .requestMatchers("/api/v1").permitAll()
-                        .requestMatchers("/api/v1/**").hasAuthority("USER")
+                        .requestMatchers("/api/v1/**").hasAnyAuthority("USER", "ADMIN")
                         .anyRequest().authenticated()
                 )
-                // return 401
-                .exceptionHandling(ex -> ex
-                        .authenticationEntryPoint((request, response, authException) ->
-                                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED))
-                )
+                .exceptionHandling(ex -> ex.authenticationEntryPoint(viewAwareAuthenticationEntryPoint()))
                 .formLogin(form -> form
                         .loginPage("/login")
                         .usernameParameter("email")
                         .passwordParameter("password")
+                        .successHandler((request, response, authentication) -> {
+                            var redirectStrategy = new DefaultRedirectStrategy();
+                            redirectStrategy.sendRedirect(request, response, "/home");
+                        })
                         .permitAll()
-                        .authenticationDetailsSource(new RequestDetailsSource())
+                        .authenticationDetailsSource(detailsSource())
                         .failureHandler((request, response, exception) -> {
                             var defaultFailureHandler = new SimpleUrlAuthenticationFailureHandler("/login?error");
                             var redirectStrategy = new DefaultRedirectStrategy();
@@ -157,13 +187,28 @@ class SecurityConfiguration {
                         })
                 )
                 .rememberMe(configurer -> configurer
-                        .rememberMeServices(tokenBasedRememberMeServices())
+                        .rememberMeServices(tokenBasedRememberMeServices(detailsSource()))
                 );
 
         return http.build();
     }
 
+    private static AuthenticationEntryPoint viewAwareAuthenticationEntryPoint() {
+        RequestMatcher apiMatcher = PathPatternRequestMatcher.withDefaults().matcher("/api/**");
+        var apiEntryPoint = new RequestMatcherEntry<AuthenticationEntryPoint>(
+                apiMatcher, new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED));
+
+        return new DelegatingAuthenticationEntryPoint(
+                new LoginUrlAuthenticationEntryPoint("/login"), List.of(apiEntryPoint));
+    }
+
     @Bean
+    RequestDetailsSource detailsSource() {
+        return new RequestDetailsSource();
+    }
+
+    @Bean
+    @Profile("!local")
     CompromisedPasswordChecker compromisedPasswordChecker() {
         return new HaveIBeenPwnedRestApiPasswordChecker();
     }
@@ -231,8 +276,13 @@ class SecurityConfiguration {
     }
 
     @Bean
-    TokenBasedRememberMeServices tokenBasedRememberMeServices() {
-        return new TokenBasedRememberMeServices(keyProperties.getRememberMeKey(), userDetailsService);
+    TokenBasedRememberMeServices tokenBasedRememberMeServices(RequestDetailsSource detailsSource) {
+        var rememberMeServices = new TokenBasedRememberMeServices(
+                keyProperties.getRememberMeKey(),
+                userDetailsService
+        );
+        rememberMeServices.setAuthenticationDetailsSource(detailsSource);
+        return rememberMeServices;
     }
 
     @Bean
