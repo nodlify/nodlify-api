@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<body>
+
+<footer th:fragment="footerFull"
+        class="footer" x-data="{ lang: 'en' }">
+    <div class="wrap">
+        <div class="footer-grid">
+            <div class="footer-brand">
+                <span class="logo">nodlify<span class="dot">.</span></span>
+                <p class="small mt-1.5">The simplest way to pick a date together.</p>
+            </div>
+            <div class="footer-col">
+                <h4>Developers</h4>
+                <ul>
+                    <li><a href="#">GitHub</a></li>
+                    <li><a href="#">Documentation</a></li>
+                    <li><a href="#">Self‑hosted</a></li>
+                </ul>
+            </div>
+            <div class="footer-col">
+                <h4>Legal</h4>
+                <ul>
+                    <li><a href="#">Privacy Policy</a></li>
+                    <li><a href="#">Cookie Policy</a></li>
+                    <li><a href="#">Terms of Use</a></li>
+                </ul>
+            </div>
+            <div class="footer-col">
+                <h4>Language</h4>
+                <select class="lang-dropdown" x-model="lang" aria-label="Language">
+                    <option value="en">English</option>
+                    <option value="pl">Polski</option>
+                    <option value="de">Deutsch</option>
+                    <option value="es">Español</option>
+                    <option value="fr">Français</option>
+                </select>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <span>© 2026 Nodlify · GNU AGPLv3 licensed</span>
+            <span><!--/* TODO: add something here */--></span>
+        </div>
+    </div>
+</footer>
+
+<footer th:fragment="footerMinimal"
+        class="footer-min" x-data="{ lang: 'en' }">
+    <div class="wrap footer-min-inner">
+        <nav class="footer-min-links">
+            <a href="#">Privacy Policy</a>
+            <a href="#">Cookie Policy</a>
+            <a href="#">Terms of Use</a>
+        </nav>
+        <div class="footer-min-right">
+            <span class="footer-min-meta">© 2026 Nodlify</span>
+            <select class="lang-dropdown footer-min-lang" x-model="lang" aria-label="Language">
+                <option value="en">English</option>
+                <option value="pl">Polski</option>
+                <option value="de">Deutsch</option>
+                <option value="es">Español</option>
+                <option value="fr">Français</option>
+            </select>
+        </div>
+    </div>
+</footer>
+
+</body>
+</html>

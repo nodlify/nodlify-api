@@ -69,7 +69,7 @@ class PollApiMvcSpec extends MvcSpec {
                 .getResponse()
 
         then:
-        1 * pollUseCase.createPoll(_, _) >> pollData
+        1 * pollUseCase.createPoll(_, _, _, _, VOTING_DEADLINE, REQUIRE_PARTICIPANT_NAMES) >> pollData
 
         and:
         response.status == 201

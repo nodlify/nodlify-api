@@ -7,6 +7,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -27,6 +28,7 @@ public class ProblemDetailsForAdminView implements Problem, HasInvalidParams {
     private String detail;
     private String instance;
     private String stackTrace;
+    private Instant createdAt;
 
     @Builder.Default
     private String traceId = UUID.randomUUID().toString();

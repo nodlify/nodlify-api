@@ -1,5 +1,6 @@
 package com.pickdate.poll.infrastructure;
 
+import com.pickdate.poll.application.LocationData;
 import com.pickdate.poll.application.OptionData;
 import com.pickdate.poll.application.ParticipantData;
 import com.pickdate.poll.application.PollData;
@@ -17,6 +18,10 @@ record PollResponse(
         String id,
         String title,
         String description,
+        Instant votingDeadline,
+        boolean requireParticipantNames,
+        String organizer,
+        LocationData location,
         List<ParticipantData> participants,
         List<OptionGroup> optionGroups
 ) {
@@ -27,6 +32,10 @@ record PollResponse(
                 pollData.id(),
                 pollData.title(),
                 pollData.description(),
+                pollData.votingDeadline(),
+                pollData.requireParticipantNames(),
+                pollData.organizer(),
+                pollData.location(),
                 pollData.participants(),
                 optionGroups
         );

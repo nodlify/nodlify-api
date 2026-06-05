@@ -3,6 +3,7 @@ package com.pickdate.iam.infrastructure;
 import com.pickdate.shared.web.RequestDetails;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
+import org.jspecify.annotations.NonNull;
 import org.springframework.security.authentication.AuthenticationDetailsSource;
 
 
@@ -10,7 +11,7 @@ import org.springframework.security.authentication.AuthenticationDetailsSource;
 class RequestDetailsSource implements AuthenticationDetailsSource<HttpServletRequest, RequestDetails> {
 
     @Override
-    public RequestDetails buildDetails(HttpServletRequest request) {
+    public @NonNull RequestDetails buildDetails(@NonNull HttpServletRequest request) {
         String ip = resolve(request);
         String userAgent = getUserAgent(request);
         return new RequestDetails(ip, userAgent);

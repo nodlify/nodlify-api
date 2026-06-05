@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en"
+      xmlns:th="http://www.thymeleaf.org"
+      th:fragment="layout(title, header, content, footer, scripts)"
+      th:with="
+          scripts=${scripts?:null},
+          header=${header?:null},
+          footer=${footer?:null}
+      ">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="_csrf" th:content="${_csrf.token}">
+    <meta name="_csrf_header" th:content="${_csrf.headerName}">
+    <th:block th:replace="${title}"/>
+    <meta name="description"
+          content="Group scheduling, with consent. Propose times, collect yes/no/maybe in one tap, lock the best slot. Free, open source, no ads."/>
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3/dist/cdn.min.js"></script>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500;600&display=swap"
+          rel="stylesheet">
+
+    <link rel="stylesheet" th:href="@{/css/app.css}"/>
+</head>
+
+<body>
+
+<th:block th:if="${header != null}">
+    <th:block th:replace="${header} ?: ~{fragments/header :: header}"></th:block>
+</th:block>
+
+<main>
+    <th:block th:replace="${content}"></th:block>
+</main>
+
+<th:block th:if="${footer != null}">
+    <th:block th:replace="${footer} ?: ~{fragments/footer :: footerMinimal}"></th:block>
+</th:block>
+
+<th:block th:if="${scripts != null}">
+    <th:block th:replace="${scripts}"></th:block>
+</th:block>
+
+</body>
+</html>

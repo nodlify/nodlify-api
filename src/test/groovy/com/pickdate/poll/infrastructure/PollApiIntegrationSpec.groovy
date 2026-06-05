@@ -1,7 +1,11 @@
 package com.pickdate.poll.infrastructure
 
 import com.pickdate.poll.application.PollUseCaseTestConfig
+import com.pickdate.poll.domain.Description
+import com.pickdate.poll.domain.Poll
+import com.pickdate.poll.domain.Title
 import com.pickdate.shared.domain.Identifier
+import org.springframework.security.core.Authentication
 import spock.lang.Execution
 import spock.lang.Specification
 import spock.lang.Subject
@@ -46,6 +50,8 @@ class PollApiIntegrationSpec extends Specification implements PollApiTrait {
 
         poll.title() == title()
         poll.description() == description()
+        poll.votingDeadline() == votingDeadline()
+        poll.requireParticipantNames() == requireParticipantNames()
     }
 
     def "should delete poll"() {
@@ -115,5 +121,22 @@ class PollApiIntegrationSpec extends Specification implements PollApiTrait {
         then:
         response.statusCode.value() == 200
         !response.body.options().any { it.optionId() == optionId }
+    }
+
+    def "should return polls for authenticated user"() {
+        given:
+        def owner = "owner@example.com"
+        def poll = Poll.from(Title.of("Owner's poll"), Description.of("desc"))
+        poll.@createdBy = owner
+        PollUseCaseTestConfig.repository.save(poll)
+
+        def auth = Mock(Authentication) { getName() >> owner }
+
+        when:
+        def response = controller.getMyPolls(auth)
+
+        then:
+        response.statusCode.value() == 200
+        response.body.any { it.title() == "Owner's poll" }
     }
 }

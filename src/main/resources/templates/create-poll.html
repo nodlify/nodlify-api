@@ -1,0 +1,589 @@
+<!DOCTYPE html>
+<html lang="en"
+      xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout/main :: layout(
+          title=~{::title},
+          header=~{::header},
+          content=~{::main},
+          footer=~{fragments/footer :: footerMinimal},
+          scripts=~{::script}
+      )}"
+>
+<head>
+    <title>Create a poll · Nodlify</title>
+</head>
+<body>
+
+<header th:fragment="header" class="cp-nav">
+    <div class="wrap cp-nav-inner">
+        <a href="/" class="cp-back"><span class="arrow inline-block rotate-180">→</span> Back to home</a>
+        <a href="/"><span class="logo">nodlify<span class="dot">.</span></span></a>
+        <span class="cp-step-meta">Draft · auto‑saved</span>
+    </div>
+</header>
+
+<div th:fragment="main" x-data="createPoll()" x-init="init()">
+
+    <div x-show="submitted" x-cloak>
+        <div class="wrap">
+            <div class="cp-success">
+                <div class="check-big">✓</div>
+                <div>
+                    <span class="eyebrow mb-3 inline-flex">Poll created</span>
+                    <h2>Your link is ready to share.</h2>
+                </div>
+                <p class="lede max-w-[44ch]">
+                    Send it to participants — they'll vote yes / no / maybe with one tap.
+                    You'll get an email when each person votes.
+                </p>
+                <div class="cp-link-card">
+                    <span class="link-url" x-text="'https://nodlify.com/p/' + generatedId"></span>
+                    <button class="btn btn-sm" @click="copyLink()">Copy</button>
+                </div>
+                <div class="cp-success-actions">
+                    <a :href="'/vote/' + generatedId" class="btn">Open the poll <span class="arrow">→</span></a>
+                    <button class="btn btn-ghost" @click="submitted = false">Edit details</button>
+                </div>
+                <p class="small mt-6">
+                    Tip: anyone with the link can vote — no account needed.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <div x-show="!submitted" x-cloak>
+        <div class="wrap">
+            <div class="cp-layout cp-layout-single">
+                <div class="cp-form">
+
+                    <div class="cp-header">
+                        <span class="eyebrow">New poll</span>
+                        <h1>What are we picking a time for?</h1>
+                        <p>Fill in a few details. You'll get a shareable link — no account needed for participants.</p>
+                    </div>
+
+                    <section class="cp-section">
+                        <div class="cp-section-head">
+                            <span class="cp-section-num">01</span>
+                            <h2 class="cp-section-title">Title</h2>
+                        </div>
+                        <p class="cp-section-hint">A short, friendly name participants will see at the top.</p>
+                        <input class="cp-input" placeholder="e.g. Team dinner — November"
+                               x-model="title" maxlength="80"/>
+                    </section>
+
+                    <section class="cp-section">
+                        <div class="cp-section-head">
+                            <span class="cp-section-num">02</span>
+                            <h2 class="cp-section-title">Description</h2>
+                            <span class="cp-optional">Optional</span>
+                        </div>
+                        <p class="cp-section-hint">A note for participants — what it's about, what to bring, where to
+                            meet.</p>
+                        <textarea class="cp-textarea"
+                                  placeholder="e.g. Quarterly planning offsite. Plan for two hours, food included."
+                                  x-model="description" maxlength="500"></textarea>
+                    </section>
+
+                    <section class="cp-section">
+                        <div class="cp-section-head">
+                            <span class="cp-section-num">03</span>
+                            <h2 class="cp-section-title">Propose dates</h2>
+                            <span class="cp-optional">Optional</span>
+                        </div>
+                        <p class="cp-section-hint">Add time options now, or leave this empty and add them later.</p>
+
+                        <div class="cp-opt-list">
+                            <template x-for="(opt, i) in options" :key="i">
+                                <div :class="'cp-opt' + (opt.allDay ? ' allday' : '')">
+                                    <span class="cp-opt-handle">⋮⋮</span>
+                                    <input type="date" class="cp-opt-input"
+                                           :value="opt.date"
+                                           @change="options[i].date = $event.target.value"/>
+                                    <template x-if="!opt.allDay">
+                                        <input type="time" class="cp-opt-input time"
+                                               :value="opt.start"
+                                               @change="options[i].start = $event.target.value"/>
+                                    </template>
+                                    <template x-if="!opt.allDay">
+                                        <input type="time" class="cp-opt-input time"
+                                               :value="opt.end"
+                                               @change="options[i].end = $event.target.value"/>
+                                    </template>
+                                    <template x-if="opt.allDay">
+                                        <span class="allday-tag">All day</span>
+                                    </template>
+                                    <button class="cp-opt-remove" @click="removeOption(i)" aria-label="Remove">×
+                                    </button>
+                                </div>
+                            </template>
+                        </div>
+
+                        <div class="mt-2 flex flex-wrap gap-2">
+                            <button class="cp-opt-add" type="button" @click="addOption(false)">
+                                <span class="plus">+</span> Add time range
+                            </button>
+                            <button class="cp-opt-add" type="button" @click="addOption(true)">
+                                <span class="plus">+</span> Add whole‑day option
+                            </button>
+                        </div>
+                    </section>
+
+                    <section class="cp-section">
+                        <div class="cp-section-head">
+                            <span class="cp-section-num">04</span>
+                            <h2 class="cp-section-title">Location</h2>
+                            <button class="cp-switch ml-auto" :class="{ on: hasLocation }"
+                                    @click="hasLocation = !hasLocation"
+                                    aria-label="Toggle location" type="button"></button>
+                        </div>
+                        <p class="cp-section-hint">Optional. Adds a place — and a map preview — to the invite.</p>
+                        <div x-show="hasLocation" x-cloak
+                             class="cp-location-wrap"
+                             @click.outside="showLocationDropdown = false">
+                            <input class="cp-input"
+                                   placeholder="Search for a venue or address…"
+                                   x-model="locationQuery"
+                                   @input.debounce.500ms="searchLocation()"
+                                   @focus="showLocationDropdown = true"
+                                   autocomplete="off"/>
+                            <div x-show="showLocationDropdown" class="cp-location-dropdown">
+                                <template x-for="r in locationResults" :key="r.placeId">
+                                    <button type="button" class="cp-location-dropdown-item"
+                                            @click="selectLocation(r)"
+                                            x-text="r.address"></button>
+                                </template>
+                                <div x-show="locationSearching" class="cp-location-dropdown-status">Searching…</div>
+                                <div x-show="!locationSearching && locationQuery.length > 1 && locationResults.length === 0"
+                                     class="cp-location-dropdown-status">No matches
+                                </div>
+                                <button type="button" class="cp-location-dropdown-item cp-location-dropdown-map"
+                                        @click="openMapPicker()">
+                                    <span class="cp-location-dropdown-icon">📍</span> Pick on map
+                                </button>
+                            </div>
+                            <div x-show="location" class="cp-location-badge">
+                                <span x-text="location && location.address" class="cp-location-badge-text"></span>
+                                <button type="button" @click="clearLocation()" aria-label="Remove location">×</button>
+                            </div>
+                        </div>
+                    </section>
+
+                    <section class="cp-section">
+                        <div class="cp-section-head">
+                            <span class="cp-section-num">05</span>
+                            <h2 class="cp-section-title">Settings</h2>
+                        </div>
+                        <p class="cp-section-hint">Fine‑tune how voting works. You can change these later.</p>
+
+                        <div class="cp-toggle-row">
+                            <div class="cp-toggle-label">
+                                <span>Voting deadline</span>
+                                <span class="desc">Poll becomes read‑only after this date.</span>
+                            </div>
+                            <input type="date" class="cp-input w-[180px] px-3 py-2 text-sm"
+                                   x-model="deadline"/>
+                        </div>
+
+                        <div class="cp-toggle-row">
+                            <div class="cp-toggle-label">
+                                <span>Require participant names</span>
+                                <span class="desc">Anonymous votes are hidden if off.</span>
+                            </div>
+                            <button class="cp-switch" :class="{ on: requireNames }"
+                                    @click="requireNames = !requireNames"
+                                    type="button" aria-label="Toggle"></button>
+                        </div>
+
+                        <!--/* will be added in the future -->
+                        <div class="cp-toggle-row premium-locked">
+                            <div class="cp-toggle-label">
+                                <span>Allow comments <span class="pro-badge">PRO</span></span>
+                                <span class="desc">Participants can leave a short note with their vote.</span>
+                            </div>
+                            <button class="cp-switch locked" disabled type="button" aria-label="Pro feature">
+                                <span class="lock-icon">◦</span>
+                            </button>
+                        </div>
+                        <!--*/-->
+
+                        <!--/* will be added in the future -->
+                        <div class="cp-toggle-row premium-locked">
+                            <div class="cp-toggle-label">
+                                <span>Hide results until I lock the time <span class="pro-badge">PRO</span></span>
+                                <span class="desc">Reduces vote-chasing. Only you see live results.</span>
+                            </div>
+                            <button class="cp-switch locked" disabled type="button" aria-label="Pro feature">
+                                <span class="lock-icon">◦</span>
+                            </button>
+                        </div>
+                        <!--*/-->
+                    </section>
+
+                </div>
+            </div>
+        </div>
+
+        <div class="cp-bottom">
+            <div class="wrap cp-bottom-inner">
+                <div class="cp-status">
+                    <span class="summary" x-text="statusMessage"></span>
+                    <span class="small"
+                          x-text="validCount + ' option' + (validCount === 1 ? '' : 's') + ' · deadline ' + deadline"></span>
+                </div>
+                <button class="btn" type="button"
+                        :disabled="!canCreate || creating"
+                        :class="{ 'cursor-not-allowed opacity-40': !canCreate || creating }"
+                        @click="submit()">
+                    <span x-text="creating ? 'Creating…' : 'Create poll & add dates'"></span>
+                    <span class="arrow">→</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div x-show="mapPickerOpen"
+         x-cloak
+         class="cp-map-backdrop"
+         @keydown.escape.window="mapPickerOpen = false"
+         @click.self="mapPickerOpen = false">
+        <div class="cp-map-modal">
+            <div class="cp-map-modal-head">
+                <h3>Pick a location</h3>
+                <button class="cp-map-close" type="button"
+                        @click="mapPickerOpen = false" aria-label="Close">×
+                </button>
+            </div>
+            <div class="cp-map-search-wrap" @click.outside="mapSearchResults = []">
+                <input class="cp-input"
+                       placeholder="Search for a place…"
+                       x-model="mapSearchQuery"
+                       @input.debounce.500ms="searchNominatim()"
+                       autocomplete="off"/>
+                <div x-show="mapSearchResults.length > 0" class="cp-map-search-results">
+                    <template x-for="r in mapSearchResults" :key="r.placeId">
+                        <button type="button" class="cp-map-search-result"
+                                @click="selectMapResult(r)"
+                                x-text="r.address"></button>
+                    </template>
+                </div>
+            </div>
+            <div id="cp-map" class="cp-map-container"></div>
+            <div class="cp-map-footer">
+                <div x-show="!pickedLocationName" class="cp-map-hint">
+                    Click on the map or search to select a location
+                </div>
+                <div x-show="pickedLocationName" class="cp-map-picked">
+                    <span x-text="pickedLocationName" class="cp-map-picked-name"></span>
+                </div>
+                <button class="btn btn-sm" type="button"
+                        :disabled="!pickedLocation"
+                        :class="{ 'opacity-40': !pickedLocation }"
+                        @click="confirmMapPick()">
+                    Use this location <span class="arrow">→</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<script>
+    function createPoll() {
+        function todayPlus(days) {
+            const d = new Date();
+            d.setDate(d.getDate() + days);
+            return d.toISOString().slice(0, 10);
+        }
+
+        return {
+            title: '',
+            description: '',
+            options: [],
+            hasLocation: false,
+            locationQuery: '',
+            location: null,
+            locationResults: [],
+            locationSearching: false,
+            showLocationDropdown: false,
+            mapPickerOpen: false,
+            mapSearchQuery: '',
+            mapSearchResults: [],
+            mapSearchLoading: false,
+            pickedLocation: null,
+            pickedLocationName: '',
+            _map: null,
+            _marker: null,
+            deadline: todayPlus(10),
+            requireNames: true,
+            submitted: false,
+            creating: false,
+            generatedId: '',
+
+            init() {
+            },
+
+            get validCount() {
+                return this.options.filter(o => o.date).length;
+            },
+            get canCreate() {
+                return this.title.trim().length > 0;
+            },
+            get statusMessage() {
+                if (this.canCreate) return 'Ready to publish';
+                if (!this.title.trim()) return 'Add a title to continue';
+                return 'Almost there';
+            },
+
+            addOption(allDay) {
+                const lastDate = this.options.length
+                        ? this.options[this.options.length - 1].date
+                        : todayPlus(5);
+                let nextDate = todayPlus(5);
+                if (lastDate) {
+                    const d = new Date(lastDate + 'T00:00:00');
+                    d.setDate(d.getDate() + 1);
+                    nextDate = d.toISOString().slice(0, 10);
+                }
+                this.options.push({date: nextDate, start: '18:00', end: '19:30', allDay});
+            },
+
+            removeOption(i) {
+                this.options.splice(i, 1);
+            },
+
+            csrfHeaders() {
+                const token = document.querySelector('meta[name="_csrf"]')?.content;
+                const header = document.querySelector('meta[name="_csrf_header"]')?.content;
+                const headers = {'Content-Type': 'application/json', 'Accept': 'application/json'};
+                if (token && header) headers[header] = token;
+                return headers;
+            },
+
+            toPayload() {
+                return {
+                    title: this.title.trim(),
+                    description: this.description.trim() || null,
+                    votingDeadline: this.deadline ? this.deadline + 'T23:59:59Z' : null,
+                    requireParticipantNames: this.requireNames,
+                    location: this.location ? {
+                        latitude: this.location.latitude,
+                        longitude: this.location.longitude,
+                        placeId: this.location.placeId,
+                        address: this.location.address,
+                    } : null,
+                    options: this.options.filter(o => o.date).map(o => o.allDay
+                            ? {startAt: o.date + 'T00:00:00Z', endAt: o.date + 'T23:59:59Z', wholeDay: true}
+                            : {
+                                startAt: o.date + 'T' + o.start + ':00Z',
+                                endAt: o.date + 'T' + o.end + ':00Z',
+                                wholeDay: false
+                            }),
+                };
+            },
+
+            async submit() {
+                if (!this.canCreate || this.creating) return;
+                this.creating = true;
+                try {
+                    const res = await fetch('/api/v1/polls', {
+                        method: 'POST',
+                        headers: this.csrfHeaders(),
+                        credentials: 'same-origin',
+                        body: JSON.stringify(this.toPayload()),
+                    });
+                    if (!res.ok) {
+                        this.creating = false;
+                        return;
+                    }
+                    const data = await res.json();
+                    // Created — send the owner to the manage view to add dates and share.
+                    window.location.href = '/poll/' + data.id;
+                } catch (_) {
+                    this.creating = false;
+                }
+            },
+
+            copyLink() {
+                navigator.clipboard.writeText('https://nodlify.com/p/' + this.generatedId);
+            },
+
+            openMapPicker() {
+                this.pickedLocation = this.location ? Object.assign({}, this.location) : null;
+                this.pickedLocationName = this.location ? this.location.address : '';
+                this.mapSearchQuery = '';
+                this.mapSearchResults = [];
+                this.showLocationDropdown = false;
+                this.mapPickerOpen = true;
+                this.$nextTick(() => this._initMap());
+            },
+
+            async searchLocation() {
+                const q = this.locationQuery.trim();
+                if (q.length < 2) {
+                    this.locationResults = [];
+                    return;
+                }
+                this.showLocationDropdown = true;
+                this.locationSearching = true;
+                try {
+                    const res = await fetch('/api/v1/geocoding/search?q=' + encodeURIComponent(q),
+                            {headers: {'Accept': 'application/json'}, credentials: 'same-origin'});
+                    this.locationResults = res.ok ? await res.json() : [];
+                } catch (_) {
+                    this.locationResults = [];
+                } finally {
+                    this.locationSearching = false;
+                }
+            },
+
+            selectLocation(r) {
+                this.location = {
+                    latitude: r.latitude,
+                    longitude: r.longitude,
+                    placeId: r.placeId,
+                    address: r.address,
+                };
+                this.locationQuery = r.address;
+                this.locationResults = [];
+                this.showLocationDropdown = false;
+            },
+
+            clearLocation() {
+                this.location = null;
+                this.locationQuery = '';
+                this.locationResults = [];
+            },
+
+            confirmMapPick() {
+                if (!this.pickedLocation) return;
+                this.location = Object.assign({}, this.pickedLocation);
+                this.locationQuery = this.location.address;
+                this.mapPickerOpen = false;
+            },
+
+            async searchNominatim() {
+                const q = this.mapSearchQuery.trim();
+                if (!q) {
+                    this.mapSearchResults = [];
+                    return;
+                }
+                this.mapSearchLoading = true;
+                try {
+                    const res = await fetch('/api/v1/geocoding/search?q=' + encodeURIComponent(q),
+                            {headers: {'Accept': 'application/json'}, credentials: 'same-origin'});
+                    this.mapSearchResults = res.ok ? await res.json() : [];
+                } catch (_) {
+                    this.mapSearchResults = [];
+                } finally {
+                    this.mapSearchLoading = false;
+                }
+            },
+
+            selectMapResult(r) {
+                this._map.setView([r.latitude, r.longitude], 15);
+                if (this._marker) {
+                    this._marker.setLatLng([r.latitude, r.longitude]);
+                } else {
+                    this._marker = L.marker([r.latitude, r.longitude], {draggable: true}).addTo(this._map);
+                    this._marker.on('dragend', (e) => this._reverseGeocode(e.target.getLatLng()));
+                }
+                this.pickedLocation = {
+                    latitude: r.latitude,
+                    longitude: r.longitude,
+                    placeId: r.placeId,
+                    address: r.address,
+                };
+                this.pickedLocationName = r.address;
+                this.mapSearchResults = [];
+            },
+
+            _initMap() {
+                if (window.L) {
+                    if (this._map) {
+                        this._map.invalidateSize();
+                        if (this.pickedLocation) {
+                            this._map.setView([this.pickedLocation.latitude, this.pickedLocation.longitude], 14);
+                            if (this._marker) this._marker.setLatLng([this.pickedLocation.latitude, this.pickedLocation.longitude]);
+                        }
+                        return;
+                    }
+                    this._setupMap();
+                    return;
+                }
+                if (!document.getElementById('cp-leaflet-css')) {
+                    const link = document.createElement('link');
+                    link.id = 'cp-leaflet-css';
+                    link.rel = 'stylesheet';
+                    link.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
+                    document.head.appendChild(link);
+                }
+                if (!document.getElementById('cp-leaflet-js')) {
+                    const s = document.createElement('script');
+                    s.id = 'cp-leaflet-js';
+                    s.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
+                    s.onload = () => this._setupMap();
+                    document.head.appendChild(s);
+                } else {
+                    const wait = () => window.L ? this._setupMap() : setTimeout(wait, 100);
+                    wait();
+                }
+            },
+
+            _setupMap() {
+                const el = document.getElementById('cp-map');
+                if (!el) return;
+                const center = this.pickedLocation
+                        ? [this.pickedLocation.latitude, this.pickedLocation.longitude]
+                        : [52.2297, 21.0122];
+                this._map = L.map('cp-map').setView(center, this.pickedLocation ? 14 : 11);
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+                    maxZoom: 19,
+                }).addTo(this._map);
+                if (this.pickedLocation) {
+                    this._marker = L.marker(center, {draggable: true}).addTo(this._map);
+                    this._marker.on('dragend', (e) => this._reverseGeocode(e.target.getLatLng()));
+                }
+                this._map.on('click', (e) => {
+                    const latlng = e.latlng;
+                    if (this._marker) {
+                        this._marker.setLatLng(latlng);
+                    } else {
+                        this._marker = L.marker(latlng, {draggable: true}).addTo(this._map);
+                        this._marker.on('dragend', (ev) => this._reverseGeocode(ev.target.getLatLng()));
+                    }
+                    this._reverseGeocode(latlng);
+                });
+            },
+
+            async _reverseGeocode(latlng) {
+                const fallback = latlng.lat.toFixed(6) + ', ' + latlng.lng.toFixed(6);
+                try {
+                    const res = await fetch('/api/v1/geocoding/reverse?lat=' + latlng.lat + '&lon=' + latlng.lng,
+                            {headers: {'Accept': 'application/json'}, credentials: 'same-origin'});
+                    const data = res.ok && res.status !== 204 ? await res.json() : null;
+                    const address = (data && data.address) || fallback;
+                    this.pickedLocation = {
+                        latitude: latlng.lat,
+                        longitude: latlng.lng,
+                        placeId: data ? data.placeId : null,
+                        address,
+                    };
+                    this.pickedLocationName = address;
+                } catch (_) {
+                    this.pickedLocation = {
+                        latitude: latlng.lat,
+                        longitude: latlng.lng,
+                        placeId: null,
+                        address: fallback
+                    };
+                    this.pickedLocationName = fallback;
+                }
+            },
+        };
+    }
+</script>
+
+</body>
+</html>

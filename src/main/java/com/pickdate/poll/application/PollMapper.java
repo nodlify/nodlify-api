@@ -23,8 +23,13 @@ final class PollMapper {
                 valueOrNull(poll.getId()),
                 valueOrNull(poll.getTitle()),
                 valueOrNull(poll.getDescription()),
+                poll.getVotingDeadline(),
+                poll.isRequireParticipantNames(),
                 toParticipants(poll.getParticipants()),
-                toOptionData(poll.getOptions())
+                toOptionData(poll.getOptions()),
+                poll.getCreatedAt(),
+                poll.getCreatedBy(),
+                LocationData.from(poll.getLocation())
         );
     }
 

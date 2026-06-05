@@ -2,14 +2,17 @@ package com.pickdate.poll.infrastructure;
 
 import com.pickdate.poll.application.PollData;
 import com.pickdate.poll.application.PollUseCase;
+import com.pickdate.poll.domain.Option;
 import com.pickdate.shared.domain.Identifier;
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 import static org.springframework.http.HttpStatus.CREATED;
 import static org.springframework.http.HttpStatus.OK;
@@ -18,11 +21,17 @@ import static org.springframework.http.HttpStatus.OK;
 @RestController
 @RequestMapping("/api/v1/polls")
 @RequiredArgsConstructor
-@Tag(name = "Polls", description = "Manage polls and options")
-@SecurityRequirement(name = "basicAuth")
+@Tag(name = "Public - Polls", description = "Poll and option endpoints")
 class PollApi {
 
     private final PollUseCase pollUseCase;
+
+    @GetMapping
+    @Operation(summary = "List my polls", description = "Returns all polls created by the authenticated user")
+    ResponseEntity<List<PollData>> getMyPolls(Authentication authentication) {
+        var polls = pollUseCase.getMyPolls(authentication.getName());
+        return ResponseEntity.ok(polls);
+    }
 
     @GetMapping("/{pollId}")
     @Operation(summary = "Get poll by id", description = "Returns poll details for given identifier")
@@ -33,10 +42,30 @@ class PollApi {
     }
 
     @PostMapping
-    @Operation(summary = "Create new poll", description = "Creates a new poll with provided title and description")
+    @Operation(summary = "Create new poll", description = "Creates a new poll with provided title, description, settings, optional location, and date options")
     ResponseEntity<PollData> createPoll(@Valid @RequestBody CreatePollRequest req) {
-        var data = pollUseCase.createPoll(req.getTitle(), req.getDescription());
+        var options = req.getOptions().stream()
+                .map(option -> Option.from(option.toRange(), option.isWholeDay()))
+                .toList();
+        var data = pollUseCase.createPoll(
+                req.getTitle(),
+                req.getDescription(),
+                req.toLocationDetails(),
+                options,
+                req.getVotingDeadline(),
+                req.isRequireParticipantNames()
+        );
         return ResponseEntity.status(CREATED).body(data);
+    }
+
+    @PatchMapping("/{pollId}")
+    @Operation(summary = "Update poll details", description = "Updates the title and description of an existing poll")
+    ResponseEntity<PollData> updatePoll(
+            @PathVariable String pollId,
+            @Valid @RequestBody UpdatePollRequest request
+    ) {
+        var data = pollUseCase.updateDetails(Identifier.of(pollId), request.getTitle(), request.getDescription());
+        return ResponseEntity.ok(data);
     }
 
     @DeleteMapping("/{pollId}")
@@ -52,7 +81,8 @@ class PollApi {
             @PathVariable String pollId,
             @Valid @RequestBody CreateOptionRequest request
     ) {
-        var data = pollUseCase.addOption(Identifier.of(pollId), request.toRange(), request.isWholeDay());
+        var option = Option.from(request.toRange(), request.isWholeDay());
+        var data = pollUseCase.addOption(Identifier.of(pollId), option);
         return ResponseEntity.status(CREATED).body(data);
     }
 

@@ -1,5 +1,6 @@
 package com.pickdate.iam.domain;
 
+import com.pickdate.shared.domain.DisplayName;
 import com.pickdate.shared.domain.Email;
 import com.pickdate.shared.domain.Identifier;
 import jakarta.persistence.*;
@@ -53,9 +54,18 @@ public class User {
     @Column(name = "updated_at")
     private Instant updatedAt;
 
+    @Column(name = "display_name")
+    private DisplayName displayName;
+
     public User(Email email, Password password) {
         this.password = password;
         this.email = email;
+    }
+
+    public User(Email email, Password password, DisplayName displayName) {
+        this.password = password;
+        this.email = email;
+        this.displayName = displayName;
     }
 
     public User addAuthority(Authority authority) {

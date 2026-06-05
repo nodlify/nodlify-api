@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en"
+      xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout/main :: layout(
+          title=~{::title},
+          header=~{fragments/header :: header},
+          content=~{::main},
+          footer=~{fragments/footer :: footerMinimal},
+          scripts=~{::script}
+      )}"
+>
+<head>
+    <title>Home · Nodlify</title>
+</head>
+<body>
+
+<div th:fragment="main"
+     class="home-page"
+     x-data="{
+       filter: 'active',
+       sort: 'recent',
+       displayName: '',
+       polls: [
+         { id: '4hT9k', title: 'Q4 planning offsite',          status: 'active',  options: 4, voted: 6,  invited: 8,  avatars: ['AK','MD','LW','TL','SR','JL'] },
+         { id: '9mP2x', title: 'Team dinner — November',       status: 'active',  options: 4, voted: 5,  invited: 8,  avatars: ['AK','MD','LW','SR','PS'] },
+         { id: '2nB7r', title: 'Design review — next sprint',  status: 'decided', options: 5, voted: 7,  invited: 7,  avatars: ['AK','MD','LW','TL','SR','JL','HB'] },
+         { id: '8kT4w', title: 'Founders coffee chat',         status: 'active',  options: 3, voted: 2,  invited: 4,  avatars: ['AK','SR'] },
+         { id: '5jR3v', title: 'Open source sync (monthly)',   status: 'decided', options: 4, voted: 11, invited: 12, avatars: ['AK','MD','LW','TL','SR','JL','PS','HB'] },
+         { id: '1aB6c', title: 'Q1 OKR workshop',              status: 'active',  options: 3, voted: 1,  invited: 6,  avatars: ['SR'] },
+         { id: '7gH9z', title: 'Eng all‑hands — October',      status: 'closed',  options: 4, voted: 14, invited: 18, avatars: ['AK','MD','LW','TL','SR'] }
+       ],
+       get filtered() {
+         return this.filter === 'all' ? this.polls : this.polls.filter(p => p.status === this.filter);
+       },
+       get counts() {
+         return {
+           all:     this.polls.length,
+           active:  this.polls.filter(p => p.status === 'active').length,
+           decided: this.polls.filter(p => p.status === 'decided').length,
+           closed:  this.polls.filter(p => p.status === 'closed').length
+         };
+       },
+       get totalVoters() { return this.polls.reduce((s, p) => s + p.voted, 0); },
+       get decisionsThisMonth() { return this.polls.filter(p => p.status === 'decided').length; },
+       greeting() {
+         const h = new Date().getHours();
+         if (h < 5)  return 'Still up';
+         if (h < 12) return 'Good morning';
+         if (h < 17) return 'Good afternoon';
+         return 'Good evening';
+       },
+       async loadUserInfo() {
+         try {
+           const res = await fetch('/api/v1/userinfo', {
+             headers: { 'Accept': 'application/json' },
+             credentials: 'same-origin',
+           });
+           if (!res.ok) return;
+           const user = await res.json();
+           this.displayName = user.displayName || '';
+         } catch (_) {}
+       },
+       csrfHeaders() {
+         const token = document.querySelector('meta[name=_csrf]')?.content;
+         const header = document.querySelector('meta[name=_csrf_header]')?.content;
+         const headers = { 'Content-Type': 'application/json', 'Accept': 'application/json' };
+         if (token && header) headers[header] = token;
+         return headers;
+       },
+       async duplicate(poll) {
+         try {
+           const res = await fetch('/api/v1/polls', {
+             method: 'POST',
+             headers: this.csrfHeaders(),
+             credentials: 'same-origin',
+             body: JSON.stringify({ title: poll.title }),
+           });
+           if (!res.ok) return;
+           const data = await res.json();
+           this.polls.unshift({
+             id: data.id,
+             title: data.title,
+             status: 'active',
+             options: (data.options || []).length,
+             voted: 0,
+             invited: 0,
+             avatars: [],
+           });
+         } catch (_) {}
+       }
+     }"
+     x-init="loadUserInfo()">
+
+    <div class="wrap">
+        <div class="home-header">
+            <div>
+                <h1>
+                    <span x-text="greeting()"></span><span x-show="displayName">, <i class="text-[var(--yes)]"
+                                                                                     x-text="displayName"></i></span>.
+                    <span class="h1-sub">
+            You have <span x-text="counts.active"></span> active
+            <span x-text="counts.active === 1 ? 'poll' : 'polls'"></span> ·
+            <span x-text="totalVoters"></span> votes collected this week
+          </span>
+                </h1>
+            </div>
+            <a href="/create-poll" class="btn">Create a new poll <span class="arrow">→</span></a>
+        </div>
+
+        <!--/* TODO: add stats
+        <div class="home-stats editorial">
+            <div class="stat-card">
+                <span class="stat-label">Active polls</span>
+                <span class="stat-value" x-text="counts.active"></span>
+                <span class="stat-trend up">+2 this week</span>
+            </div>
+            <div class="stat-card">
+                <span class="stat-label">Decisions made</span>
+                <span class="stat-value" x-text="decisionsThisMonth"></span>
+                <span class="stat-trend">this month</span>
+            </div>
+            <div class="stat-card">
+                <span class="stat-label">Total participants</span>
+                <span class="stat-value">42</span>
+                <span class="stat-trend up">+11 vs Oct</span>
+            </div>
+        </div>
+        */-->
+        <div class="home-filters">
+            <div class="filter-tabs">
+                <template
+                        x-for="tab in [{id:'all',label:'All'},{id:'active',label:'Voting'},{id:'decided',label:'Decided'},{id:'closed',label:'Closed'}]"
+                        :key="tab.id">
+                    <button class="filter-tab" :class="{ active: filter === tab.id }" @click="filter = tab.id">
+                        <span x-text="tab.label"></span><span class="count" x-text="counts[tab.id]"></span>
+                    </button>
+                </template>
+            </div>
+            <select class="sort-select" x-model="sort">
+                <option value="recent">Sort: Most recent</option>
+                <option value="participants">Sort: Most participants</option>
+                <option value="closing">Sort: Closing soon</option>
+                <option value="alpha">Sort: A–Z</option>
+            </select>
+        </div>
+
+        <div class="poll-list">
+            <div class="poll-list-header">
+                <span>Poll</span>
+                <span>Status</span>
+                <span>Participants</span>
+                <span></span>
+            </div>
+
+            <template x-if="filtered.length === 0">
+                <div class="empty-state">
+                    <h3 class="empty-title">No polls here yet</h3>
+                    <p>Polls you create will show up in this view.</p>
+                    <a href="/create-poll" class="btn">Create your first poll <span class="arrow">→</span></a>
+                </div>
+            </template>
+
+            <template x-for="poll in filtered" :key="poll.id">
+                <div class="poll-row">
+                    <div class="poll-row-title">
+                        <span class="title" x-text="poll.title"></span>
+                        <span class="meta">
+              <span x-text="'nodlify.com/p/' + poll.id"></span>
+              <template x-if="poll.options > 0">
+                <span><span class="sep">·</span> <span x-text="poll.options + ' options'"></span></span>
+              </template>
+            </span>
+                    </div>
+
+                    <span class="status-badge" :class="poll.status">
+            <template x-if="poll.status === 'active'"><span class="pulse"></span></template>
+            <span x-text="{ active: 'Voting', decided: 'Decided', closed: 'Closed', draft: 'Draft' }[poll.status] || poll.status"></span>
+          </span>
+
+                    <div class="participants-stack">
+                        <template x-for="(a, i) in poll.avatars.slice(0, 3)" :key="i">
+                            <span class="avatar" x-text="a"></span>
+                        </template>
+                        <template x-if="poll.invited - Math.min(poll.avatars.length, 3) > 0">
+                            <span class="more" x-text="'+' + (poll.invited - Math.min(poll.avatars.length, 3))"></span>
+                        </template>
+                    </div>
+
+                    <div class="row-actions">
+                        <button class="row-action" aria-label="Duplicate poll" title="Duplicate"
+                                @click="duplicate(poll)">
+                            <img th:src="@{/icons/duplicate.svg}" width="18" height="18" alt="" aria-hidden="true">
+                        </button>
+                        <button class="row-action" aria-label="More" title="More">⋯</button>
+                    </div>
+                </div>
+            </template>
+        </div>
+    </div>
+
+</div>
+
+</body>
+</html>

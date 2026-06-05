@@ -31,7 +31,7 @@
     </root>
 
     <springProfile name="test">
-        <logger level="DEBUG" name="com.pickdate">
+        <logger level="DEBUG" name="com.pickdate" additivity="false">
             <appender-ref ref="CONSOLE"/>
             <appender-ref ref="FILE"/>
         </logger>
@@ -42,7 +42,7 @@
     </springProfile>
 
     <springProfile name="prod">
-        <logger level="INFO" name="com.pickdate">
+        <logger level="INFO" name="com.pickdate" additivity="false">
             <appender-ref ref="CONSOLE"/>
             <appender-ref ref="FILE"/>
         </logger>
@@ -53,7 +53,7 @@
     </springProfile>
 
     <springProfile name="local">
-        <logger level="TRACE" name="com.pickdate">
+        <logger level="DEBUG" name="com.pickdate" additivity="false">
             <appender-ref ref="CONSOLE"/>
         </logger>
         <root level="INFO">

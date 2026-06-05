@@ -22,6 +22,11 @@ class PollRepositoryFake implements PollRepository {
     }
 
     @Override
+    List<Poll> findByCreatedBy(String createdBy) {
+        return map.values().findAll { it.createdBy == createdBy }.toList()
+    }
+
+    @Override
     void deleteById(Identifier pollId) {
         map.remove(pollId)
     }

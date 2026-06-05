@@ -1,0 +1,9 @@
+@import "../static/css/styles.css";
+@import "../static/css/home.css";
+@import "../static/css/auth.css";
+@import "../static/css/create-poll.css";
+@import "../static/css/setup.css";
+@import "../static/css/vote.css";
+@import "../static/css/admin.css";
+
+@tailwind utilities;

@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="en"
+      xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout/main :: layout(
+          title=~{::title},
+          header=~{::header},
+          content=~{::main},
+          footer=~{fragments/footer :: footerMinimal},
+          scripts=~{::script}
+      )}"
+>
+<head>
+    <title>Vote · Nodlify</title>
+</head>
+<body>
+
+<header th:fragment="header" class="cp-nav">
+    <div class="wrap cp-nav-inner">
+        <a href="/"><span class="logo">nodlify<span class="dot">.</span></span></a>
+        <span class="cp-step-meta">Powered by nodlify</span>
+    </div>
+</header>
+
+<div th:fragment="main" x-data="votePage()" x-init="init()" th:data-poll-id="${pollId}">
+
+    <div x-show="loading" x-cloak>
+        <div class="vote-wrap">
+            <div class="vote-head"><span class="eyebrow">Loading…</span></div>
+        </div>
+    </div>
+
+    <div x-show="!loading && error" x-cloak>
+        <div class="vote-wrap">
+            <div class="vote-head">
+                <span class="eyebrow">Something went wrong</span>
+                <h1 x-text="error"></h1>
+            </div>
+        </div>
+    </div>
+
+    <div x-show="!loading && !error && submitted" x-cloak>
+        <div class="vote-wrap">
+            <div class="vote-success">
+                <div class="big-check">✓</div>
+                <div>
+                    <span class="eyebrow mb-3 inline-flex">Vote recorded</span>
+                    <h2>Thanks, <span x-text="name.split(' ')[0]"></span>.</h2>
+                </div>
+                <p>The organizer will see your responses. You'll get a calendar invite once the time is locked.</p>
+
+                <div class="recap">
+                    <div class="recap-label">Your votes</div>
+                    <template x-for="opt in poll.options" :key="opt.id">
+                        <div class="recap-row">
+                            <div>
+                                <div class="recap-day" x-text="opt.day"></div>
+                                <div class="recap-time" x-text="opt.time"></div>
+                            </div>
+                            <span class="recap-vote" :class="votes[opt.id] || 'empty'"
+                                  x-text="votes[opt.id] || '—'"></span>
+                        </div>
+                    </template>
+                </div>
+
+                <div class="mt-2 flex flex-wrap justify-center gap-3">
+                    <button class="btn btn-ghost" @click="submitted = false">Change my votes</button>
+                    <a href="/" class="btn">Create your own poll <span class="arrow">→</span></a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div x-show="!loading && !error && !submitted" x-cloak>
+        <div class="vote-wrap">
+
+            <div class="vote-head">
+                <span class="eyebrow">You've been invited to vote</span>
+                <h1 x-text="poll.title"></h1>
+                <p class="desc" x-show="poll.description" x-text="poll.description"></p>
+
+                <div class="vote-meta">
+                    <div class="vote-meta-item" x-show="poll.organizer">
+            <span class="icon">
+              <img th:src="@{/icons/user.svg}" width="13" height="13" alt="" aria-hidden="true">
+            </span>
+                        <span>Organized by <b x-text="poll.organizer"></b></span>
+                    </div>
+                    <div class="vote-meta-item" x-show="poll.location">
+            <span class="icon">
+              <img th:src="@{/icons/location.svg}" width="13" height="13" alt="" aria-hidden="true">
+            </span>
+                        <span x-text="poll.location"></span>
+                    </div>
+                    <div class="vote-meta-item" x-show="poll.deadline">
+            <span class="icon">
+              <img th:src="@{/icons/clock.svg}" width="13" height="13" alt="" aria-hidden="true">
+            </span>
+                        <span x-text="poll.deadline"></span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="options-section">
+                <div class="section-title">
+                    <span>Pick what works for you</span>
+                    <span class="hint" x-text="filledCount + '/' + poll.options.length + ' answered'"></span>
+                </div>
+                <div class="option-list">
+                    <template x-for="opt in poll.options" :key="opt.id">
+                        <div class="option-card" :class="{ 'has-yes': votes[opt.id] === 'yes' }">
+                            <div class="option-info">
+                                <div class="option-day" x-text="opt.day"></div>
+                                <div class="option-time" x-text="opt.time"></div>
+                            </div>
+                            <div class="vote-buttons">
+                                <button class="vote-btn yes" :class="{ active: votes[opt.id] === 'yes' }"
+                                        @click="cast(opt.id, 'yes')" aria-label="Yes">
+                                    <span class="glyph">✓</span>
+                                    <span class="lbl">Yes</span>
+                                </button>
+                                <button class="vote-btn maybe" :class="{ active: votes[opt.id] === 'maybe' }"
+                                        @click="cast(opt.id, 'maybe')" aria-label="Maybe">
+                                    <span class="glyph">?</span>
+                                    <span class="lbl">Maybe</span>
+                                </button>
+                                <button class="vote-btn no" :class="{ active: votes[opt.id] === 'no' }"
+                                        @click="cast(opt.id, 'no')" aria-label="No">
+                                    <span class="glyph">✕</span>
+                                    <span class="lbl">No</span>
+                                </button>
+                            </div>
+                        </div>
+                    </template>
+                </div>
+            </div>
+
+            <div class="name-section">
+                <div class="section-title mb-0">
+                    <span>Who are you?</span>
+                    <span class="hint">Required so the organizer knows who voted</span>
+                </div>
+                <div class="row">
+                    <label>
+                        Your name
+                        <input type="text" placeholder="e.g. Anja Kowalska" x-model="name"/>
+                    </label>
+                    <label>
+                        <span>Email <span class="ml-1.5 text-xs text-[var(--muted-2)]">(optional)</span></span>
+                        <input type="email" placeholder="anja@acme.io" x-model="email"/>
+                    </label>
+                </div>
+                <span class="text-xs text-[var(--muted)]">
+          Add your email and we'll send you the calendar invite once the time is locked.
+        </span>
+            </div>
+
+        </div>
+
+        <div class="vote-bottom">
+            <div class="vote-bottom-inner">
+                <div class="status">
+                    <span class="summary" x-text="statusMessage"></span>
+                    <span class="sub" x-text="yesCount + ' yes · ' + maybeCount + ' maybe · ' + noCount + ' no'"></span>
+                </div>
+                <button class="btn"
+                        :disabled="!canSubmit"
+                        :class="{ 'cursor-not-allowed opacity-40': !canSubmit }"
+                        @click="submitVotes()">
+                    Submit my votes <span class="arrow">→</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<script th:fragment="script">
+    function votePage() {
+        return {
+            pollId: '',
+            poll: {title: '', description: '', organizer: '', location: '', deadline: '', options: []},
+            votes: {},
+            name: '',
+            email: '',
+            loading: true,
+            error: '',
+            submitted: false,
+
+            init() {
+                this.pollId = this.$el.dataset.pollId;
+                this.loadPoll();
+            },
+
+            async loadPoll() {
+                try {
+                    const res = await fetch('/api/v1/polls/' + encodeURIComponent(this.pollId),
+                            {headers: {'Accept': 'application/json'}, credentials: 'same-origin'});
+                    if (!res.ok) {
+                        this.error = res.status === 404 ? 'This poll could not be found.' : 'Could not load this poll.';
+                        return;
+                    }
+                    const data = await res.json();
+                    const options = (data.optionGroups || [])
+                            .flatMap(group => group.options || [])
+                            .sort((a, b) => new Date(a.startAt) - new Date(b.startAt))
+                            .map(opt => ({
+                                id: opt.optionId,
+                                day: this.formatDay(opt.startAt),
+                                time: opt.wholeDay
+                                        ? 'All day'
+                                        : this.formatTime(opt.startAt) + ' – ' + this.formatTime(opt.endAt),
+                            }));
+                    this.poll = {
+                        title: data.title,
+                        description: data.description || '',
+                        organizer: data.organizer || '',
+                        location: data.location ? data.location.address : '',
+                        deadline: data.votingDeadline ? 'Closes ' + this.formatDeadline(data.votingDeadline) : '',
+                        options,
+                    };
+                } catch (_) {
+                    this.error = 'Could not load this poll.';
+                } finally {
+                    this.loading = false;
+                }
+            },
+
+            cast(optId, value) {
+                this.votes[optId] = this.votes[optId] === value ? null : value;
+            },
+
+            get filledCount() {
+                return this.poll.options.filter(o => this.votes[o.id]).length;
+            },
+            get total() {
+                return this.poll.options.length;
+            },
+            get canSubmit() {
+                return this.total > 0 && this.filledCount === this.total && this.name.trim().length > 0;
+            },
+            get statusMessage() {
+                if (this.canSubmit) return 'Ready to submit';
+                if (this.filledCount < this.total) {
+                    const n = this.total - this.filledCount;
+                    return n + ' option' + (n === 1 ? '' : 's') + ' left';
+                }
+                return 'Add your name to continue';
+            },
+            get yesCount() {
+                return Object.values(this.votes).filter(v => v === 'yes').length;
+            },
+            get maybeCount() {
+                return Object.values(this.votes).filter(v => v === 'maybe').length;
+            },
+            get noCount() {
+                return Object.values(this.votes).filter(v => v === 'no').length;
+            },
+
+            submitVotes() {
+                if (!this.canSubmit) return;
+                this.submitted = true;
+            },
+
+            formatDay(iso) {
+                return new Date(iso).toLocaleDateString(undefined,
+                        {weekday: 'short', month: 'short', day: 'numeric'});
+            },
+            formatTime(iso) {
+                return new Date(iso).toLocaleTimeString(undefined,
+                        {hour: '2-digit', minute: '2-digit'});
+            },
+            formatDeadline(iso) {
+                return new Date(iso).toLocaleString(undefined,
+                        {weekday: 'short', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'});
+            },
+        };
+    }
+</script>
+
+</body>
+</html>

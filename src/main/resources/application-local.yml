@@ -27,6 +27,6 @@ pickdate:
   observability:
     problem:
       enabled: true
-      logged-statuses: [ 400, 401, 403, 404, 409, 500, 503 ]
+      logged-statuses: [ 400, 401, 403, 409, 500, 503 ]
     audit:
       enabled: true

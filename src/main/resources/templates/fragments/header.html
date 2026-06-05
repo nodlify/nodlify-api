@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<body>
+
+<header th:fragment="header"
+        class="home-nav"
+        x-data="{
+            displayName: '',
+            menuOpen: false,
+            get initials() {
+                const value = this.displayName.trim();
+                if (!value) return '?';
+                const parts = value.split(/\s+/);
+                if (parts.length === 1) {
+                    return parts[0].slice(0, 2).toUpperCase();
+                }
+                return parts.slice(0, 2)
+                    .map(part => part.charAt(0).toUpperCase())
+                    .join('');
+            },
+            async loadUserInfo() {
+                try {
+                    const response = await fetch('/api/v1/userinfo', {
+                        headers: { 'Accept': 'application/json' },
+                        credentials: 'same-origin'
+                    });
+                    if (!response.ok) return;
+
+                    const user = await response.json();
+                    this.displayName = user.displayName || '';
+                } catch (_) {
+                    this.displayName = '';
+                }
+            }
+        }"
+        x-init="loadUserInfo()"
+        @keydown.escape.window="menuOpen = false">
+    <div class="wrap home-nav-inner">
+        <a href="/"><span class="logo">nodlify<span class="dot">.</span></span></a>
+        <nav class="home-nav-links">
+            <a href="/home" class="active">My polls</a>
+            <!--/* TODO: add settings page
+            <a href="#">Settings</a>
+            */-->
+        </nav>
+        <div class="home-nav-right">
+            <input class="search-input" type="search" placeholder="Search polls?"/>
+
+            <div class="avatar-menu-wrap" @click.outside="menuOpen = false">
+                <button class="avatar-button"
+                        type="button"
+                        aria-label="Profile"
+                        :aria-expanded="menuOpen.toString()"
+                        aria-haspopup="menu"
+                        :title="displayName || 'Profile'"
+                        @click="menuOpen = !menuOpen"
+                        x-text="initials">?
+                </button>
+
+                <div class="avatar-menu"
+                     x-show="menuOpen"
+                     x-transition.origin.top.right
+                     x-cloak
+                     role="menu">
+                    <div class="avatar-menu-name" x-text="displayName || 'Profile'"></div>
+                    <form th:action="@{/logout}" method="post">
+                        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                        <button type="submit" class="avatar-menu-action" role="menuitem">
+                            Log out
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</header>
+
+</body>
+</html>

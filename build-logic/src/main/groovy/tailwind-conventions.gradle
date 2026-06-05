@@ -1,0 +1,42 @@
+import de.undercouch.gradle.tasks.download.Download
+
+def tailwind = extensions.create('tailwind', TailwindExtension, objects)
+def os = System.getProperty('os.name').toLowerCase()
+def arch = System.getProperty('os.arch').toLowerCase()
+def twOs = os.contains('windows') ? 'windows' : os.contains('mac') ? 'macos' : 'linux'
+def twArch = (arch.contains('aarch64') || arch.contains('arm64')) ? 'arm64' : 'x64'
+def twExe = "tailwindcss-${twOs}-${twArch}${twOs == 'windows' ? '.exe' : ''}"
+def twCli = tailwind.version.map { version ->
+    layout.buildDirectory.file("tailwind/v${version}/${twExe}").get()
+}
+
+tasks.register('downloadTailwindCli', Download) {
+    inputs.property('tailwindVersion', tailwind.version)
+    src tailwind.version.map { version ->
+        "https://github.com/tailwindlabs/tailwindcss/releases/download/v${version}/${twExe}"
+    }
+    dest twCli
+    overwrite false
+    doLast { if (twOs != 'windows') twCli.get().asFile.setExecutable(true) }
+}
+
+tasks.register('buildTailwind', Exec) {
+    dependsOn 'downloadTailwindCli'
+    def input = file('src/main/resources/tailwind/input.css')
+    def output = layout.buildDirectory.file('generated/tailwind/static/css/app.css')
+    inputs.files('tailwind.config.js', input)
+    inputs.files(fileTree('src/main/resources/static/css') { include '**/*.css' })
+    inputs.files(fileTree('src/main/resources/templates') { include '**/*.html' })
+    outputs.file(output)
+    executable twCli.get().asFile.absolutePath
+    args '-c', 'tailwind.config.js', '-i', input.absolutePath,
+            '-o', output.get().asFile.absolutePath, '--minify'
+}
+
+abstract class TailwindExtension {
+    abstract Property<String> getVersion()
+
+    TailwindExtension(ObjectFactory objects) {
+        version.convention('3.4.17')
+    }
+}

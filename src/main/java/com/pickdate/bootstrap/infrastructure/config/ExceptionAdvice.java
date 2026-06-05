@@ -28,23 +28,46 @@ class ExceptionAdvice {
 
     private final Optional<ProblemEventPublisher> problemEventPublisher;
 
+    @ExceptionHandler(ErrorResponseException.class)
+    ResponseEntity<Problem> handleException(ErrorResponseException exception, HttpServletRequest request) {
+        URI uri = getUri(request);
+        Problem problem = ProblemFactory.resolveException(exception, uri);
+
+        int status = exception.getStatusCode().value();
+
+        if (status >= 500) {
+            log.error("Error response: status={}, path={}", status, request.getRequestURI(), exception);
+        } else if (status == 404) {
+            log.debug("Error response: status={}, path={}", status, request.getRequestURI());
+        } else if (status >= 400) {
+            log.warn("Error response: status={}, path={}", status, request.getRequestURI(), exception);
+        } else {
+            log.info("Error response: status={}, path={}", status, request.getRequestURI());
+        }
+
+        publish(new ProblemCapturedEvent(problem, exception.getDetailMessageCode()));
+
+        return new ResponseEntity<>(problem, exception.getStatusCode());
+    }
+
+    @ApiResponse(responseCode = "404", description = "Not found")
     @ExceptionHandler({
-            ErrorResponseException.class,
             org.springframework.web.servlet.resource.NoResourceFoundException.class,
             org.springframework.web.reactive.resource.NoResourceFoundException.class
     })
-    ResponseEntity<Problem> handleException(ErrorResponse errorResponse, HttpServletRequest request) {
-        log.error("Error response");
+    ResponseEntity<Problem> handleNoResourceFound(ErrorResponse errorResponse, HttpServletRequest request) {
+        log.debug("Static resource not found: {}", request.getRequestURI());
+
         URI uri = getUri(request);
         Problem problem = ProblemFactory.resolveException(errorResponse, uri);
         publish(new ProblemCapturedEvent(problem, errorResponse.getDetailMessageCode()));
-        return new ResponseEntity<>(problem, errorResponse.getStatusCode());
+        return new ResponseEntity<>(problem, HttpStatusCode.valueOf(problem.getStatus()));
     }
 
     @ApiResponse(responseCode = "404", description = "Not found")
     @ExceptionHandler(EntityNotFoundException.class)
     ResponseEntity<Problem> handleNotFound(RuntimeException ex, HttpServletRequest request) {
-        log.info("Resource not found", ex);
+        log.debug("Resource not found", ex);
         URI uri = getUri(request);
         Problem problem = notFound(ex, uri);
         publish(new ProblemCapturedEvent(problem, ex.getMessage()));
@@ -54,7 +77,7 @@ class ExceptionAdvice {
     @ApiResponse(responseCode = "404", description = "Not found")
     @ExceptionHandler(NotFoundException.class)
     ResponseEntity<Problem> handleNotFound(NotFoundException ex, HttpServletRequest request) {
-        log.info("Resource not found", ex);
+        log.debug("Resource not found", ex);
         URI uri = getUri(request);
         Problem problem = notFound(ex, uri);
         publish(new ProblemCapturedEvent(problem, ex.getMessage()));
