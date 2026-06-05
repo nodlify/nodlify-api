@@ -31,7 +31,7 @@
     </root>
 
     <springProfile name="test">
-        <logger level="DEBUG" name="com.pickdate" additivity="false">
+        <logger level="DEBUG" name="com.nodlify" additivity="false">
             <appender-ref ref="CONSOLE"/>
             <appender-ref ref="FILE"/>
         </logger>
@@ -42,7 +42,7 @@
     </springProfile>
 
     <springProfile name="prod">
-        <logger level="INFO" name="com.pickdate" additivity="false">
+        <logger level="INFO" name="com.nodlify" additivity="false">
             <appender-ref ref="CONSOLE"/>
             <appender-ref ref="FILE"/>
         </logger>
@@ -53,7 +53,7 @@
     </springProfile>
 
     <springProfile name="local">
-        <logger level="DEBUG" name="com.pickdate" additivity="false">
+        <logger level="DEBUG" name="com.nodlify" additivity="false">
             <appender-ref ref="CONSOLE"/>
         </logger>
         <root level="INFO">

@@ -3,8 +3,8 @@
     <option name="ACTIVE_PROFILES" value="swagger,observability,local" />
     <option name="DEBUG_MODE" value="true" />
     <option name="FRAME_DEACTIVATION_UPDATE_POLICY" value="UpdateClassesAndResources" />
-    <module name="pickdate-api.main" />
-    <option name="SPRING_BOOT_MAIN_CLASS" value="com.pickdate.App" />
+    <module name="nodlify-api.main" />
+    <option name="SPRING_BOOT_MAIN_CLASS" value="com.nodlify.App" />
     <option name="VM_PARAMETERS" value="-Djava.net.preferIPv4Stack=true" />
     <extension name="software.aws.toolkits.jetbrains.core.execution.JavaAwsConnectionExtension">
       <option name="credential" />

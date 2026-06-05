@@ -19,8 +19,8 @@ jobs:
       INCLUDE_SLOW_TESTS: "true"
       SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
       SONAR_HOST_URL: https://sonarcloud.io
-      SONAR_ORGANIZATION: pickdate
-      SONAR_PROJECT_KEY: pickdate_pickdate-api
+      SONAR_ORGANIZATION: nodlify
+      SONAR_PROJECT_KEY: nodlify_nodlify-api
     steps:
       - uses: actions/checkout@v4
         with:

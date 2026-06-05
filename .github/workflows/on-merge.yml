@@ -9,7 +9,7 @@ concurrency:
 
 env:
   INCLUDE_SLOW_TESTS: "true"
-  IMAGE_NAME: ghcr.io/${{ github.repository_owner }}/pickdate-api
+  IMAGE_NAME: ghcr.io/${{ github.repository_owner }}/nodlify-api
 
 jobs:
   prepare-env:
@@ -74,8 +74,8 @@ jobs:
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           SONAR_HOST_URL: https://sonarcloud.io
-          SONAR_ORGANIZATION: pickdate
-          SONAR_PROJECT_KEY: pickdate_pickdate-api
+          SONAR_ORGANIZATION: nodlify
+          SONAR_PROJECT_KEY: nodlify_nodlify-api
 
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
@@ -145,9 +145,9 @@ jobs:
 
       - name: Apply secrets
         run: |
-          kubectl -n pickdate-test create secret generic pickdate-api-secret \
-            --from-literal=database-user="${{ secrets.TEST_PICKDATE_DATABASE_USER }}" \
-            --from-literal=database-password="${{ secrets.TEST_PICKDATE_DATABASE_PASS }}" \
+          kubectl -n nodlify-test create secret generic nodlify-api-secret \
+            --from-literal=database-user="${{ secrets.TEST_NODLIFY_DATABASE_USER }}" \
+            --from-literal=database-password="${{ secrets.TEST_NODLIFY_DATABASE_PASS }}" \
             --dry-run=client -o yaml | kubectl apply -f -
 
       - name: Generate token for infra repo
@@ -156,13 +156,13 @@ jobs:
         with:
           app-id: ${{ secrets.INFRA_APP_ID }}
           private-key: ${{ secrets.INFRA_APP_PRIVATE_KEY }}
-          owner: pickdate
-          repositories: pickdate-infra
+          owner: nodlify
+          repositories: nodlify-infra
 
       - name: Checkout infrastructure
         uses: actions/checkout@v4
         with:
-          repository: pickdate/pickdate-infra
+          repository: nodlify/nodlify-infra
           path: infra
           token: ${{ steps.infra-token.outputs.token }}
           persist-credentials: false
@@ -173,8 +173,8 @@ jobs:
 
       - name: Deploy to k3s
         run: |
-          kubectl -n pickdate-test set image deployment/pickdate-api pickdate-api="${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }}"
-          kubectl -n pickdate-test rollout status deployment/pickdate-api --timeout=180s
+          kubectl -n nodlify-test set image deployment/nodlify-api nodlify-api="${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }}"
+          kubectl -n nodlify-test rollout status deployment/nodlify-api --timeout=180s
 
   tag-release:
     name: Create tag

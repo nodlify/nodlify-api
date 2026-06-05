@@ -1,5 +1,5 @@
 # observability config
-pickdate:
+nodlify:
   observability:
     problem:
       enabled: true

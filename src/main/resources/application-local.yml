@@ -10,10 +10,10 @@ spring:
         show_sql: true
 
   datasource:
-    url: jdbc:postgresql://${PICKDATE_DATABASE_URL:localhost:5432/pickdate}
-    username: ${PICKDATE_DATABASE_USER:root}
-    password: ${PICKDATE_DATABASE_PASS:pass}
-    name: pickdate
+    url: jdbc:postgresql://${NODLIFY_DATABASE_URL:localhost:5432/nodlify}
+    username: ${NODLIFY_DATABASE_USER:root}
+    password: ${NODLIFY_DATABASE_PASS:pass}
+    name: nodlify
     hikari:
       maximum-pool-size: 20
 
@@ -23,7 +23,7 @@ spring:
     validate-on-migrate: true
 
 # override observability config
-pickdate:
+nodlify:
   observability:
     problem:
       enabled: true
