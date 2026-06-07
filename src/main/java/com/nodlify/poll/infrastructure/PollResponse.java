@@ -1,9 +1,6 @@
 package com.nodlify.poll.infrastructure;
 
-import com.nodlify.poll.application.LocationData;
-import com.nodlify.poll.application.OptionData;
-import com.nodlify.poll.application.ParticipantData;
-import com.nodlify.poll.application.PollData;
+import com.nodlify.poll.application.*;
 
 import java.time.Instant;
 import java.time.LocalDate;
@@ -19,41 +16,48 @@ record PollResponse(
         String title,
         String description,
         Instant votingDeadline,
-        boolean requireParticipantNames,
         String organizer,
         LocationData location,
+        String status,
+        boolean allowAnonymous,
+        String type,
+        String choiceType,
         List<ParticipantData> participants,
+        List<OptionData> options,
         List<OptionGroup> optionGroups
 ) {
 
-    static PollResponse from(PollData pollData) {
-        var optionGroups = toOptionGroups(pollData.options());
+    static PollResponse from(PollData pollData, String organizer) {
         return new PollResponse(
                 pollData.id(),
                 pollData.title(),
                 pollData.description(),
                 pollData.votingDeadline(),
-                pollData.requireParticipantNames(),
-                pollData.organizer(),
+                organizer,
                 pollData.location(),
+                pollData.status(),
+                pollData.allowAnonymous(),
+                pollData.type(),
+                pollData.choiceType(),
                 pollData.participants(),
-                optionGroups
+                pollData.options(),
+                toOptionGroups(pollData.options())
         );
     }
 
     static List<OptionGroup> toOptionGroups(List<OptionData> options) {
         return options.stream()
-                .sorted(comparing(OptionData::startAt))
+                .filter(TimeOptionData.class::isInstance)
+                .map(TimeOptionData.class::cast)
+                .sorted(comparing(TimeOptionData::startAt))
                 .collect(groupingBy(option -> toLocalDate(option.startAt())))
                 .values()
                 .stream()
-                .map(option -> {
-                    var date = option.getFirst().startAt();
-                    return new OptionGroup(
-                            toLocalDate(date),
-                            option,
-                            isWholeDay(option));
-                })
+                .map(group -> new OptionGroup(
+                        toLocalDate(group.getFirst().startAt()),
+                        group,
+                        isWholeDay(group)))
+                .sorted(comparing(OptionGroup::date))
                 .toList();
     }
 
@@ -61,13 +65,13 @@ record PollResponse(
         return instant.atZone(ZoneId.of("UTC")).toLocalDate();
     }
 
-    static private boolean isWholeDay(List<OptionData> options) {
-        return options.stream().anyMatch(OptionData::wholeDay);
+    static private boolean isWholeDay(List<TimeOptionData> options) {
+        return options.stream().anyMatch(TimeOptionData::wholeDay);
     }
 
     record OptionGroup(
             LocalDate date,
-            List<OptionData> options,
+            List<TimeOptionData> options,
             boolean wholeData
     ) {
     }

@@ -3,6 +3,8 @@ package com.nodlify.poll.application;
 import com.nodlify.poll.domain.*;
 import com.nodlify.shared.domain.Identifier;
 import com.nodlify.shared.domain.Property;
+import com.nodlify.shared.domain.Value;
+import com.nodlify.shared.exception.IllegalValueException;
 import com.nodlify.shared.exception.NotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.CacheConfig;
@@ -11,8 +13,8 @@ import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.Instant;
 import java.util.List;
+import java.util.Optional;
 
 
 @Service
@@ -25,36 +27,18 @@ public class PollService implements PollUseCase {
 
     @Override
     @CacheEvict(allEntries = true)
-    public PollData createPoll(Title title, Description description) {
-        return createPoll(title, description, null, List.of());
-    }
-
-    @Override
-    @CacheEvict(allEntries = true)
-    public PollData createPoll(
-            Title title,
-            Description description,
-            LocationDetails location,
-            List<Option> options
-    ) {
-        return createPoll(title, description, location, options, null, true);
-    }
-
-    @Override
-    @CacheEvict(allEntries = true)
-    public PollData createPoll(
-            Title title,
-            Description description,
-            LocationDetails location,
-            List<Option> options,
-            Instant votingDeadline,
-            boolean requireParticipantNames
-    ) {
-        var poll = Poll.from(title, description, votingDeadline, requireParticipantNames);
-        if (location != null) {
-            poll.addLocation(GeoLocation.of(location));
+    public PollData createPoll(CreatePollCommand command) {
+        var poll = Poll.from(
+                command.title(),
+                command.description(),
+                command.votingDeadline(),
+                command.allowAnonymous(),
+                command.type(),
+                command.choiceType());
+        if (command.location() != null) {
+            poll.addLocation(GeoLocation.of(command.location()));
         }
-        poll.addOptions(options);
+        poll.addOptions(command.options() == null ? List.of() : command.options());
 
         var saved = repository.save(poll);
         return PollMapper.toPollData(saved);
@@ -68,11 +52,20 @@ public class PollService implements PollUseCase {
 
     @Override
     @CacheEvict(key = "#pollId.value")
-    public PollData registerParticipant(Identifier pollId, Participant participant) {
+    public ParticipantData registerParticipant(Identifier pollId, Participant participant) {
         var poll = findPoll(pollId);
-        poll.addParticipant(participant);
+        if (!poll.isAllowAnonymous() && Value.valueOrNull(participant.getDisplayName()) == null) {
+            throw new IllegalValueException(Property.of("displayName", null), "Participant name is required");
+        }
+        var registered = poll.addParticipant(participant);
         repository.save(poll);
-        return PollMapper.toPollData(poll);
+        return ParticipantData.from(registered);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Optional<ParticipantData> findParticipant(Identifier pollId, Identifier userId) {
+        return findPoll(pollId).findParticipant(userId).map(ParticipantData::from);
     }
 
     @Override
@@ -98,6 +91,15 @@ public class PollService implements PollUseCase {
     public PollData removeOption(Identifier pollId, Identifier optionId) {
         var poll = findPoll(pollId);
         poll.removeOption(optionId);
+        repository.save(poll);
+        return PollMapper.toPollData(poll);
+    }
+
+    @Override
+    @CacheEvict(key = "#pollId.value")
+    public PollData changeStatus(Identifier pollId, PollStatus status) {
+        var poll = findPoll(pollId);
+        poll.changeStatus(status);
         repository.save(poll);
         return PollMapper.toPollData(poll);
     }

@@ -8,7 +8,6 @@ import org.springframework.http.MediaType
 import org.springframework.security.test.context.support.WithMockUser
 import org.springframework.test.web.servlet.MockMvc
 import spock.lang.Execution
-import spock.lang.Requires
 
 import static com.nodlify.test.fixture.VoteFixture.castVoteRequestJson
 import static com.nodlify.test.fixture.VoteFixture.someVoteData
@@ -19,7 +18,6 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print
 
 @Execution(SAME_THREAD)
-@Requires({ it.env['INCLUDE_SLOW_TESTS'] == 'true' })
 class VoteApiMvcSpec extends MvcSpec {
 
     @Autowired

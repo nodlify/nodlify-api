@@ -9,5 +9,7 @@ public interface VoteUseCase {
 
     void castVote(CastVoteCommand castVoteCommand);
 
+    void removeVote(Identifier pollId, Identifier participantId, Identifier optionId);
+
     List<VoteData> getVotesBy(Identifier pollId);
 }

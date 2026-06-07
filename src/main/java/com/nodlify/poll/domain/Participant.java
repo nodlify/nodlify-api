@@ -34,6 +34,9 @@ public class Participant {
     @Column(name = "phone")
     private Phone phone;
 
+    @Column(name = "user_id")
+    private Identifier userId;
+
     public Participant(DisplayName displayName) {
         this.id = Identifier.generate();
         this.displayName = displayName;

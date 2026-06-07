@@ -38,4 +38,15 @@ class VoteApi {
         voteUseCase.castVote(request.toCommand(pollId));
         return ResponseEntity.status(CREATED).build();
     }
+
+    @DeleteMapping
+    @Operation(summary = "Remove a vote", description = "Removes a participant's vote for a given poll option")
+    ResponseEntity<Void> removeVote(
+            @PathVariable String pollId,
+            @RequestParam String participantId,
+            @RequestParam String optionId
+    ) {
+        voteUseCase.removeVote(Identifier.of(pollId), Identifier.of(participantId), Identifier.of(optionId));
+        return ResponseEntity.noContent().build();
+    }
 }

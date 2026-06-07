@@ -8,15 +8,12 @@ import com.nodlify.test.type.DataJpaSpec
 import org.spockframework.runtime.model.parallel.ExecutionMode
 import org.springframework.beans.factory.annotation.Autowired
 import spock.lang.Execution
-import spock.lang.Requires
 import spock.lang.Subject
 
 import static com.nodlify.poll.domain.Vote.VoteId
 import static com.nodlify.test.fixture.VoteFixture.*
 
-
 @Execution(ExecutionMode.SAME_THREAD)
-@Requires({ it.env['INCLUDE_SLOW_TESTS'] == 'true' })
 class VoteRepositoryJpaSpec extends DataJpaSpec implements VoteDataInitTrait {
 
     @Subject

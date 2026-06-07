@@ -15,7 +15,6 @@ import org.springframework.data.domain.PageImpl
 import org.springframework.data.domain.PageRequest
 import org.springframework.data.domain.Pageable
 import org.springframework.test.web.servlet.MockMvc
-import spock.lang.Requires
 
 import static com.nodlify.test.fixture.UserFixture.SOME_ADMIN
 import static com.nodlify.test.fixture.UserFixture.SOME_USER
@@ -23,7 +22,7 @@ import static org.springframework.http.MediaType.APPLICATION_JSON
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print
 
-@Requires({ it.env['INCLUDE_SLOW_TESTS'] == 'true' })
+
 class UserApiMvcSpec extends MvcSpec implements JsonMapper {
 
     @Autowired

@@ -16,7 +16,6 @@ jobs:
     permissions:
       contents: read
     env:
-      INCLUDE_SLOW_TESTS: "true"
       SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
       SONAR_HOST_URL: https://sonarcloud.io
       SONAR_ORGANIZATION: nodlify

@@ -3,6 +3,7 @@ package com.nodlify.test.fixture
 import com.nodlify.poll.application.OptionData
 import com.nodlify.poll.application.ParticipantData
 import com.nodlify.poll.application.PollData
+import com.nodlify.poll.application.TimeOptionData
 import com.nodlify.poll.domain.TimeRange
 import com.nodlify.shared.domain.DisplayName
 
@@ -16,7 +17,6 @@ class PollFixture {
     public static boolean WHOLE_DAY = true
     public static boolean NOT_WHOLE_DAY = false
     public static Instant VOTING_DEADLINE = Instant.parse("2026-06-15T00:00:00Z")
-    public static boolean REQUIRE_PARTICIPANT_NAMES = true
     public static final DisplayName DISPLAY_NAME = DisplayName.of("John")
     public static final Instant CREATED_AT = Instant.now()
 
@@ -48,7 +48,8 @@ class PollFixture {
     )
 
     public static List<OptionData> OPTIONS = [
-            new OptionData(
+            new TimeOptionData(
+                    "TIME",
                     ID,
                     Instant.parse("2025-08-01T00:00:00Z"),
                     Instant.parse("2025-08-01T23:59:59Z"),
@@ -64,12 +65,15 @@ class PollFixture {
                 TITLE,
                 DESCRIPTION,
                 VOTING_DEADLINE,
-                REQUIRE_PARTICIPANT_NAMES,
                 PARTICIPANTS,
                 OPTIONS,
                 CREATED_AT,
                 ORGANIZER,
-                null
+                null,
+                "VOTING",
+                false,
+                "TIME",
+                "MULTIPLE"
         )
     }
 
@@ -78,8 +82,7 @@ class PollFixture {
             {
                 "title": "$TITLE",
                 "description": "$DESCRIPTION",
-                "votingDeadline": "$VOTING_DEADLINE",
-                "requireParticipantNames": $REQUIRE_PARTICIPANT_NAMES
+                "votingDeadline": "$VOTING_DEADLINE"
             }
         """
     }

@@ -25,4 +25,9 @@ class VoteRepositoryFake implements VoteRepository {
     Optional<Vote> findById(Vote.VoteId voteId) {
         Optional.ofNullable(map.get(voteId))
     }
+
+    @Override
+    void deleteById(Vote.VoteId voteId) {
+        map.remove(voteId)
+    }
 }

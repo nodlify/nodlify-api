@@ -9,11 +9,14 @@ public record PollData(
         String title,
         String description,
         Instant votingDeadline,
-        boolean requireParticipantNames,
         List<ParticipantData> participants,
         List<OptionData> options,
         Instant createdAt,
         String organizer,
-        LocationData location
+        LocationData location,
+        String status,
+        boolean allowAnonymous,
+        String type,
+        String choiceType
 ) {
 }

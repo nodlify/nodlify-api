@@ -9,13 +9,12 @@ import com.nodlify.test.type.MvcSpec
 import org.spockframework.spring.SpringBean
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.test.web.servlet.MockMvc
-import spock.lang.Requires
 
 import static org.springframework.http.MediaType.APPLICATION_JSON
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print
 
-@Requires({ it.env['INCLUDE_SLOW_TESTS'] == 'true' })
+
 class SetupApiMvcSpec extends MvcSpec implements JsonMapper {
 
     @Autowired

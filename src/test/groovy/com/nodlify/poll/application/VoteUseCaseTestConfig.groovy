@@ -1,9 +1,11 @@
 package com.nodlify.poll.application
 
 import com.nodlify.poll.domain.Availability
+import com.nodlify.poll.domain.PollRepository
 import com.nodlify.poll.domain.Vote
 import com.nodlify.poll.domain.VoteRepository
 import com.nodlify.shared.domain.Identifier
+import com.nodlify.test.stub.PollRepositoryFake
 import com.nodlify.test.stub.VoteRepositoryFake
 
 import static com.nodlify.poll.domain.Vote.VoteId
@@ -11,9 +13,11 @@ import static com.nodlify.poll.domain.Vote.VoteId
 class VoteUseCaseTestConfig {
 
     static VoteRepository repositoryFake = new VoteRepositoryFake()
+    static PollRepository pollRepositoryFake = new PollRepositoryFake()
 
-    static VoteUseCase voteUseCase(VoteRepository voteRepository = repositoryFake) {
-        new VoteService(voteRepository)
+    static VoteUseCase voteUseCase(VoteRepository voteRepository = repositoryFake,
+                                   PollRepository pollRepository = pollRepositoryFake) {
+        new VoteService(voteRepository, pollRepository)
     }
 
     static void setupFakeData() {

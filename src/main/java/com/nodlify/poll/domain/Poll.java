@@ -1,6 +1,8 @@
 package com.nodlify.poll.domain;
 
 import com.nodlify.shared.domain.Identifier;
+import com.nodlify.shared.domain.Property;
+import com.nodlify.shared.exception.IllegalValueException;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -12,9 +14,7 @@ import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.Instant;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 import static jakarta.persistence.CascadeType.ALL;
 import static lombok.AccessLevel.PROTECTED;
@@ -38,7 +38,20 @@ public class Poll {
 
     private Instant votingDeadline;
 
-    private boolean requireParticipantNames = true;
+    @Column(name = "allow_anonymous")
+    private boolean allowAnonymous = false;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "type")
+    private PollType type = PollType.TIME;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "choice_type")
+    private ChoiceType choiceType = ChoiceType.MULTIPLE;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "status")
+    private PollStatus manualStatus;
 
     @OneToOne(cascade = ALL, orphanRemoval = true)
     @JoinColumn(name = "location_id", referencedColumnName = "id")
@@ -76,10 +89,29 @@ public class Poll {
         return poll;
     }
 
-    public static Poll from(Title title, Description description, Instant votingDeadline, boolean requireParticipantNames) {
+    public static Poll from(Title title, Description description, Instant votingDeadline) {
         var poll = from(title, description);
         poll.votingDeadline = votingDeadline;
-        poll.requireParticipantNames = requireParticipantNames;
+        return poll;
+    }
+
+    public static Poll from(Title title, Description description, Instant votingDeadline, boolean allowAnonymous) {
+        var poll = from(title, description, votingDeadline);
+        poll.allowAnonymous = allowAnonymous;
+        return poll;
+    }
+
+    public static Poll from(
+            Title title,
+            Description description,
+            Instant votingDeadline,
+            boolean allowAnonymous,
+            PollType type,
+            ChoiceType choiceType
+    ) {
+        var poll = from(title, description, votingDeadline, allowAnonymous);
+        poll.type = type == null ? PollType.TIME : type;
+        poll.choiceType = choiceType == null ? ChoiceType.MULTIPLE : choiceType;
         return poll;
     }
 
@@ -89,32 +121,90 @@ public class Poll {
     }
 
     public void addOption(TimeRange timeRange, boolean wholeDay) {
-        var option = Option.from(timeRange, wholeDay);
-        options.add(option);
+        addOption(TimeOption.of(timeRange, wholeDay));
     }
 
     public void addOption(TimeRange timeRange) {
-        var option = Option.from(timeRange);
-        options.add(option);
+        addOption(TimeOption.of(timeRange));
     }
 
     public void addOption(Option option) {
+        ensureCompatible(option);
         options.add(option);
     }
 
     public void addOptions(List<Option> options) {
-        this.options.addAll(options);
+        options.forEach(this::addOption);
+    }
+
+    private void ensureCompatible(Option option) {
+        var expected = type == PollType.SIMPLE ? TextOption.class : TimeOption.class;
+        if (!expected.isInstance(option)) {
+            throw new IllegalValueException(
+                    Property.of("option", option.getClass().getSimpleName()),
+                    "Option type does not match poll type " + type);
+        }
     }
 
     public void removeOption(Identifier optionId) {
         options.removeIf(option -> option.getId().equals(optionId));
     }
 
-    public void addParticipant(Participant participant) {
+    public Participant addParticipant(Participant participant) {
+        var userId = participant.getUserId();
+        if (userId != null) {
+            var existing = participants.stream()
+                    .filter(item -> userId.equals(item.getUserId()))
+                    .findFirst();
+            if (existing.isPresent()) {
+                return existing.get();
+            }
+        }
+        var email = participant.getEmail();
+        if (email != null) {
+            var existing = participants.stream()
+                    .filter(item -> email.equals(item.getEmail()))
+                    .findFirst();
+            if (existing.isPresent()) {
+                return existing.get();
+            }
+        }
         participants.add(participant);
+        return participant;
+    }
+
+    public Optional<Participant> findParticipant(Identifier userId) {
+        return participants.stream()
+                .filter(item -> userId.equals(item.getUserId()))
+                .findFirst();
     }
 
     public void addLocation(GeoLocation geoLocation) {
         this.location = geoLocation;
+    }
+
+    public void changeStatus(PollStatus status) {
+        this.manualStatus = status == PollStatus.VOTING ? null : status;
+    }
+
+    public PollStatus status(Instant now) {
+        if (manualStatus != null) {
+            return manualStatus;
+        }
+        return isPastDeadline(now) ? PollStatus.CLOSED : PollStatus.VOTING;
+    }
+
+    private boolean isPastDeadline(Instant now) {
+        var deadline = votingDeadline != null ? votingDeadline : lastOptionEnd();
+        return deadline != null && now.isAfter(deadline);
+    }
+
+    private Instant lastOptionEnd() {
+        return options.stream()
+                .filter(TimeOption.class::isInstance)
+                .map(TimeOption.class::cast)
+                .map(TimeOption::getEndAt)
+                .max(Comparator.naturalOrder())
+                .orElse(null);
     }
 }

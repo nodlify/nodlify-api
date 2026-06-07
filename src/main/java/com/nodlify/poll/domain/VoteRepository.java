@@ -13,4 +13,6 @@ public interface VoteRepository {
     Vote save(Vote vote);
 
     Optional<Vote> findById(Vote.VoteId voteId);
+
+    void deleteById(Vote.VoteId voteId);
 }

@@ -5,7 +5,6 @@ import com.nodlify.poll.domain.Phone;
 import com.nodlify.shared.domain.DisplayName;
 import com.nodlify.shared.domain.Email;
 import jakarta.annotation.Nullable;
-import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -16,7 +15,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 class RegisterParticipantRequest {
 
-    @NotNull
+    @Nullable
     private String displayName;
 
     @Nullable
@@ -26,7 +25,8 @@ class RegisterParticipantRequest {
     private String phone;
 
     DisplayName toDisplayName() {
-        return DisplayName.of(displayName);
+        var trimmed = displayName == null || displayName.isBlank() ? null : displayName;
+        return DisplayName.ofNullable(trimmed);
     }
 
     Email toEmail() {

@@ -8,7 +8,6 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  INCLUDE_SLOW_TESTS: "true"
   IMAGE_NAME: ghcr.io/${{ github.repository_owner }}/nodlify-api
 
 jobs:
@@ -92,7 +91,6 @@ jobs:
       contents: read
       packages: write
     env:
-      INCLUDE_SLOW_TESTS: "true"
       IMAGE_TAG: ${{ needs.prepare-env.outputs.version }}
 
     steps:

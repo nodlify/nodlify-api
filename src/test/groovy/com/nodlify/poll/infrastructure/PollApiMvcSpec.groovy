@@ -1,5 +1,8 @@
 package com.nodlify.poll.infrastructure
 
+import com.nodlify.iam.application.UserData
+import com.nodlify.iam.application.UserUseCase
+import com.nodlify.poll.application.CreatePollCommand
 import com.nodlify.poll.application.PollUseCase
 import com.nodlify.shared.domain.Property
 import com.nodlify.shared.exception.IllegalValueException
@@ -13,7 +16,6 @@ import org.springframework.http.MediaType
 import org.springframework.security.test.context.support.WithMockUser
 import org.springframework.test.web.servlet.MockMvc
 import spock.lang.Execution
-import spock.lang.Requires
 import spock.util.mop.Use
 
 import static com.nodlify.test.fixture.PollFixture.*
@@ -24,7 +26,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.
 
 @Use(JsonMapper)
 @Execution(SAME_THREAD)
-@Requires({ it.env['INCLUDE_SLOW_TESTS'] == 'true' })
 class PollApiMvcSpec extends MvcSpec {
 
     @Autowired
@@ -32,6 +33,9 @@ class PollApiMvcSpec extends MvcSpec {
 
     @SpringBean
     PollUseCase pollUseCase = Mock()
+
+    @SpringBean
+    UserUseCase userUseCase = Mock()
 
     @WithMockUser(authorities = "ROLE_USER")
     def "should be able to get poll"() {
@@ -47,9 +51,16 @@ class PollApiMvcSpec extends MvcSpec {
 
         then:
         1 * pollUseCase.getPoll(_) >> pollData
+        1 * userUseCase.getUserByEmail(ORGANIZER) >> new UserData(
+                "user-id",
+                ORGANIZER,
+                "John Organizer",
+                ["USER"]
+        )
 
         and:
         response.status == 200
+        response.toMap().organizer == "John Organizer"
     }
 
     @WithMockUser(authorities = "ROLE_USER")
@@ -69,7 +80,7 @@ class PollApiMvcSpec extends MvcSpec {
                 .getResponse()
 
         then:
-        1 * pollUseCase.createPoll(_, _, _, _, VOTING_DEADLINE, REQUIRE_PARTICIPANT_NAMES) >> pollData
+        1 * pollUseCase.createPoll(_ as CreatePollCommand) >> pollData
 
         and:
         response.status == 201

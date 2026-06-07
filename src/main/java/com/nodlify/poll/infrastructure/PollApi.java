@@ -1,14 +1,21 @@
 package com.nodlify.poll.infrastructure;
 
+import com.nodlify.iam.application.UserUseCase;
+import com.nodlify.poll.application.CreatePollCommand;
+import com.nodlify.poll.application.ParticipantData;
 import com.nodlify.poll.application.PollData;
 import com.nodlify.poll.application.PollUseCase;
-import com.nodlify.poll.domain.Option;
+import com.nodlify.poll.domain.Participant;
+import com.nodlify.shared.domain.DisplayName;
+import com.nodlify.shared.domain.Email;
 import com.nodlify.shared.domain.Identifier;
+import com.nodlify.shared.exception.NotFoundException;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
@@ -25,6 +32,7 @@ import static org.springframework.http.HttpStatus.OK;
 class PollApi {
 
     private final PollUseCase pollUseCase;
+    private final UserUseCase userUseCase;
 
     @GetMapping
     @Operation(summary = "List my polls", description = "Returns all polls created by the authenticated user")
@@ -37,25 +45,24 @@ class PollApi {
     @Operation(summary = "Get poll by id", description = "Returns poll details for given identifier")
     ResponseEntity<PollResponse> getPoll(@PathVariable String pollId) {
         var data = pollUseCase.getPoll(Identifier.of(pollId));
-        var response = PollResponse.from(data);
+        var response = PollResponse.from(data, organizerName(data));
         return ResponseEntity.ok(response);
     }
 
     @PostMapping
     @Operation(summary = "Create new poll", description = "Creates a new poll with provided title, description, settings, optional location, and date options")
     ResponseEntity<PollData> createPoll(@Valid @RequestBody CreatePollRequest req) {
-        var options = req.getOptions().stream()
-                .map(option -> Option.from(option.toRange(), option.isWholeDay()))
-                .toList();
-        var data = pollUseCase.createPoll(
+        var command = new CreatePollCommand(
                 req.getTitle(),
                 req.getDescription(),
                 req.toLocationDetails(),
-                options,
+                req.toOptions(),
                 req.getVotingDeadline(),
-                req.isRequireParticipantNames()
+                req.isAllowAnonymous(),
+                req.getPollType(),
+                req.getChoiceType()
         );
-        return ResponseEntity.status(CREATED).body(data);
+        return ResponseEntity.status(CREATED).body(pollUseCase.createPoll(command));
     }
 
     @PatchMapping("/{pollId}")
@@ -81,8 +88,7 @@ class PollApi {
             @PathVariable String pollId,
             @Valid @RequestBody CreateOptionRequest request
     ) {
-        var option = Option.from(request.toRange(), request.isWholeDay());
-        var data = pollUseCase.addOption(Identifier.of(pollId), option);
+        var data = pollUseCase.addOption(Identifier.of(pollId), request.toOption());
         return ResponseEntity.status(CREATED).body(data);
     }
 
@@ -98,12 +104,29 @@ class PollApi {
 
     @PostMapping("/{pollId}/participants")
     @Operation(summary = "Register participant", description = "Registers a participant in the poll with optional email")
-    ResponseEntity<PollData> registerParticipant(
+    ResponseEntity<ParticipantData> registerParticipant(
             @PathVariable String pollId,
-            @RequestBody RegisterParticipantRequest request
+            @RequestBody(required = false) RegisterParticipantRequest request,
+            Authentication authentication
     ) {
-        var data = pollUseCase.registerParticipant(Identifier.of(pollId), request.toParticipant());
-        return ResponseEntity.status(CREATED).body(data);
+        var participant = participantFrom(request, authentication);
+        var registered = pollUseCase.registerParticipant(Identifier.of(pollId), participant);
+        return ResponseEntity.status(CREATED).body(registered);
+    }
+
+    @GetMapping("/{pollId}/participants/me")
+    @Operation(summary = "Get my participant", description = "Returns the authenticated user's participant for the poll, or 204 if not registered")
+    ResponseEntity<ParticipantData> myParticipant(
+            @PathVariable String pollId,
+            Authentication authentication
+    ) {
+        if (!isAuthenticated(authentication)) {
+            return ResponseEntity.noContent().build();
+        }
+        var user = userUseCase.getUserByEmail(authentication.getName());
+        return pollUseCase.findParticipant(Identifier.of(pollId), Identifier.of(user.id()))
+                .map(ResponseEntity::ok)
+                .orElseGet(() -> ResponseEntity.noContent().build());
     }
 
     @PostMapping("/{pollId}/location")
@@ -114,5 +137,47 @@ class PollApi {
     ) {
         var data = pollUseCase.addLocation(Identifier.of(pollId), request.toLocationData());
         return ResponseEntity.status(CREATED).body(data);
+    }
+
+    @PatchMapping("/{pollId}/status")
+    @Operation(summary = "Change poll status", description = "Marks the poll as DECIDED or CLOSED, or reopens it (VOTING)")
+    ResponseEntity<PollData> changeStatus(
+            @PathVariable String pollId,
+            @RequestBody ChangeStatusRequest request
+    ) {
+        var data = pollUseCase.changeStatus(Identifier.of(pollId), request.toStatus());
+        return ResponseEntity.ok(data);
+    }
+
+    private Participant participantFrom(RegisterParticipantRequest request, Authentication authentication) {
+        if (isAuthenticated(authentication)) {
+            var user = userUseCase.getUserByEmail(authentication.getName());
+            return new Participant(DisplayName.of(user.displayName()))
+                    .withEmail(Email.of(user.email()))
+                    .withUserId(Identifier.of(user.id()));
+        }
+        if (request == null) {
+            throw new IllegalArgumentException("Participant details are required");
+        }
+        return request.toParticipant();
+    }
+
+    private boolean isAuthenticated(Authentication authentication) {
+        return authentication != null
+                && authentication.isAuthenticated()
+                && !(authentication instanceof AnonymousAuthenticationToken);
+    }
+
+    private String organizerName(PollData poll) {
+        var email = poll.organizer();
+        if (email == null || email.isBlank()) {
+            return email;
+        }
+        try {
+            var displayName = userUseCase.getUserByEmail(email).displayName();
+            return displayName == null || displayName.isBlank() ? email : displayName;
+        } catch (NotFoundException ignored) {
+            return email;
+        }
     }
 }

@@ -87,6 +87,26 @@
                     <section class="cp-section">
                         <div class="cp-section-head">
                             <span class="cp-section-num">03</span>
+                            <h2 class="cp-section-title" th:text="#{cp.pollType}">Poll type</h2>
+                        </div>
+                        <p class="cp-section-hint" th:text="#{cp.pollType.hint}">Pick dates to meet on, or list your own choices.</p>
+                        <div class="cp-type-grid">
+                            <button type="button" class="cp-type-card" :class="{ on: pollType === 'TIME' }"
+                                    @click="pollType = 'TIME'">
+                                <span class="cp-type-title" th:text="#{cp.pollType.time}">Date &amp; time</span>
+                                <span class="cp-type-desc" th:text="#{cp.pollType.time.desc}">Participants pick yes / no / maybe for each time.</span>
+                            </button>
+                            <button type="button" class="cp-type-card" :class="{ on: pollType === 'SIMPLE' }"
+                                    @click="pollType = 'SIMPLE'">
+                                <span class="cp-type-title" th:text="#{cp.pollType.simple}">Custom options</span>
+                                <span class="cp-type-desc" th:text="#{cp.pollType.simple.desc}">List your own choices — no dates.</span>
+                            </button>
+                        </div>
+                    </section>
+
+                    <section class="cp-section" x-show="pollType === 'TIME'" x-cloak>
+                        <div class="cp-section-head">
+                            <span class="cp-section-num">04</span>
                             <h2 class="cp-section-title" th:text="#{cp.dates}">Propose dates</h2>
                             <span class="cp-optional" th:text="#{common.optional}">Optional</span>
                         </div>
@@ -129,9 +149,48 @@
                         </div>
                     </section>
 
-                    <section class="cp-section">
+                    <section class="cp-section" x-show="pollType === 'SIMPLE'" x-cloak>
                         <div class="cp-section-head">
                             <span class="cp-section-num">04</span>
+                            <h2 class="cp-section-title" th:text="#{cp.options}">Options</h2>
+                        </div>
+                        <p class="cp-section-hint" th:text="#{cp.options.hint}">List the choices participants vote on.</p>
+
+                        <div class="cp-opt-list">
+                            <template x-for="(opt, i) in textOptions" :key="i">
+                                <div class="cp-text-opt">
+                                    <span class="cp-opt-handle">⋮⋮</span>
+                                    <input class="cp-opt-input" maxlength="255"
+                                           th:placeholder="#{cp.options.placeholder}"
+                                           :value="opt.label"
+                                           @input="textOptions[i].label = $event.target.value"/>
+                                    <button class="cp-opt-remove" type="button" @click="removeTextOption(i)"
+                                            th:attr="aria-label=#{common.remove}">×
+                                    </button>
+                                </div>
+                            </template>
+                        </div>
+
+                        <div class="mt-2 flex flex-wrap gap-2">
+                            <button class="cp-opt-add" type="button" @click="addTextOption()">
+                                <span class="plus">+</span> <span th:text="#{cp.addOption}">Add option</span>
+                            </button>
+                        </div>
+
+                        <div class="cp-toggle-row mt-4">
+                            <div class="cp-toggle-label">
+                                <span th:text="#{cp.multipleChoice}">Allow multiple choices</span>
+                                <span class="desc" th:text="#{cp.multipleChoice.desc}">Participants can pick more than one option.</span>
+                            </div>
+                            <button class="cp-switch" :class="{ on: choiceType === 'MULTIPLE' }"
+                                    @click="choiceType = choiceType === 'MULTIPLE' ? 'SINGLE' : 'MULTIPLE'"
+                                    type="button" th:attr="aria-label=#{cp.multipleChoice}"></button>
+                        </div>
+                    </section>
+
+                    <section class="cp-section">
+                        <div class="cp-section-head">
+                            <span class="cp-section-num">05</span>
                             <h2 class="cp-section-title" th:text="#{cp.location}">Location</h2>
                             <button class="cp-switch ml-auto" :class="{ on: hasLocation }"
                                     @click="hasLocation = !hasLocation"
@@ -171,7 +230,7 @@
 
                     <section class="cp-section">
                         <div class="cp-section-head">
-                            <span class="cp-section-num">05</span>
+                            <span class="cp-section-num">06</span>
                             <h2 class="cp-section-title" th:text="#{cp.settings}">Settings</h2>
                         </div>
                         <p class="cp-section-hint" th:text="#{cp.settings.hint}">Fine‑tune how voting works. You can change these later.</p>
@@ -187,12 +246,12 @@
 
                         <div class="cp-toggle-row">
                             <div class="cp-toggle-label">
-                                <span th:text="#{cp.requireNames}">Require participant names</span>
-                                <span class="desc" th:text="#{cp.requireNames.desc}">Anonymous votes are hidden if off.</span>
+                                <span th:text="#{cp.allowAnonymous}">Allow anonymous voting</span>
+                                <span class="desc" th:text="#{cp.allowAnonymous.desc}">Participants can vote without giving a name.</span>
                             </div>
-                            <button class="cp-switch" :class="{ on: requireNames }"
-                                    @click="requireNames = !requireNames"
-                                    type="button" th:attr="aria-label=#{cp.toggle}"></button>
+                            <button class="cp-switch" :class="{ on: allowAnonymous }"
+                                    @click="allowAnonymous = !allowAnonymous"
+                                    type="button" th:attr="aria-label=#{cp.allowAnonymous}"></button>
                         </div>
 
                         <!--/* will be added in the future -->
@@ -229,7 +288,7 @@
                 <div class="cp-status">
                     <span class="summary" x-text="statusMessage"></span>
                     <span class="small"
-                          x-text="validCount + ' ' + $store.i18n.t('cp.optionsCount') + ' · ' + $store.i18n.t('cp.deadlineLabel') + ' ' + deadline"></span>
+                          x-text="validCount + ' ' + $store.i18n.t('cp.optionsCount') + (deadline ? ' · ' + $store.i18n.t('cp.deadlineLabel') + ' ' + deadline : '')"></span>
                 </div>
                 <button class="btn" type="button"
                         :disabled="!canCreate || creating"
@@ -300,6 +359,9 @@
             title: '',
             description: '',
             options: [],
+            pollType: 'TIME',
+            choiceType: 'MULTIPLE',
+            textOptions: [],
             hasLocation: false,
             locationQuery: '',
             location: null,
@@ -314,8 +376,8 @@
             pickedLocationName: '',
             _map: null,
             _marker: null,
-            deadline: todayPlus(10),
-            requireNames: true,
+            deadline: '',
+            allowAnonymous: false,
             submitted: false,
             creating: false,
             generatedId: '',
@@ -333,11 +395,14 @@
                     title: this.title,
                     description: this.description,
                     options: this.options,
+                    pollType: this.pollType,
+                    choiceType: this.choiceType,
+                    textOptions: this.textOptions,
                     hasLocation: this.hasLocation,
                     location: this.location,
                     locationQuery: this.locationQuery,
                     deadline: this.deadline,
-                    requireNames: this.requireNames,
+                    allowAnonymous: this.allowAnonymous,
                 });
             },
 
@@ -349,11 +414,14 @@
                     this.title = draft.title || '';
                     this.description = draft.description || '';
                     this.options = Array.isArray(draft.options) ? draft.options : [];
+                    this.pollType = draft.pollType === 'SIMPLE' ? 'SIMPLE' : 'TIME';
+                    this.choiceType = draft.choiceType === 'SINGLE' ? 'SINGLE' : 'MULTIPLE';
+                    this.textOptions = Array.isArray(draft.textOptions) ? draft.textOptions : [];
                     this.hasLocation = !!draft.hasLocation;
                     this.location = draft.location || null;
                     this.locationQuery = draft.locationQuery || '';
                     if (draft.deadline) this.deadline = draft.deadline;
-                    if (typeof draft.requireNames === 'boolean') this.requireNames = draft.requireNames;
+                    this.allowAnonymous = !!draft.allowAnonymous;
                 } catch (_) {}
             },
 
@@ -362,10 +430,14 @@
             },
 
             get validCount() {
-                return this.options.filter(o => o.date).length;
+                return this.pollType === 'SIMPLE'
+                        ? this.textOptions.filter(o => o.label && o.label.trim()).length
+                        : this.options.filter(o => o.date).length;
             },
             get canCreate() {
-                return this.title.trim().length > 0;
+                if (this.title.trim().length === 0) return false;
+                if (this.pollType === 'SIMPLE') return this.validCount >= 2;
+                return true;
             },
             get statusMessage() {
                 if (this.canCreate) return this.$store.i18n.t('cp.status.ready');
@@ -390,6 +462,14 @@
                 this.options.splice(i, 1);
             },
 
+            addTextOption() {
+                this.textOptions.push({label: ''});
+            },
+
+            removeTextOption(i) {
+                this.textOptions.splice(i, 1);
+            },
+
             csrfHeaders() {
                 const token = document.querySelector('meta[name="_csrf"]')?.content;
                 const header = document.querySelector('meta[name="_csrf_header"]')?.content;
@@ -399,24 +479,31 @@
             },
 
             toPayload() {
+                const options = this.pollType === 'SIMPLE'
+                        ? this.textOptions
+                                .filter(o => o.label && o.label.trim())
+                                .map(o => ({label: o.label.trim()}))
+                        : this.options.filter(o => o.date).map(o => o.allDay
+                                ? {startAt: o.date + 'T00:00:00Z', endAt: o.date + 'T23:59:59Z', wholeDay: true}
+                                : {
+                                    startAt: o.date + 'T' + o.start + ':00Z',
+                                    endAt: o.date + 'T' + o.end + ':00Z',
+                                    wholeDay: false
+                                });
                 return {
                     title: this.title.trim(),
                     description: this.description.trim() || null,
+                    type: this.pollType,
+                    choiceType: this.pollType === 'SIMPLE' ? this.choiceType : 'MULTIPLE',
                     votingDeadline: this.deadline ? this.deadline + 'T23:59:59Z' : null,
-                    requireParticipantNames: this.requireNames,
+                    allowAnonymous: this.allowAnonymous,
                     location: this.location ? {
                         latitude: this.location.latitude,
                         longitude: this.location.longitude,
                         placeId: this.location.placeId,
                         address: this.location.address,
                     } : null,
-                    options: this.options.filter(o => o.date).map(o => o.allDay
-                            ? {startAt: o.date + 'T00:00:00Z', endAt: o.date + 'T23:59:59Z', wholeDay: true}
-                            : {
-                                startAt: o.date + 'T' + o.start + ':00Z',
-                                endAt: o.date + 'T' + o.end + ':00Z',
-                                wholeDay: false
-                            }),
+                    options,
                 };
             },
 
