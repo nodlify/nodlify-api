@@ -7,7 +7,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 @DefaultView
 class AuditView {
 
-    @GetMapping("/observability/audit")
+    @GetMapping("/audit")
     String auditPage() {
         return "audit";
     }

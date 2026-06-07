@@ -7,7 +7,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 @DefaultView
 class ProblemLogView {
 
-    @GetMapping("/observability/problems")
+    @GetMapping("/problems")
     String problemsPage() {
         return "problems";
     }

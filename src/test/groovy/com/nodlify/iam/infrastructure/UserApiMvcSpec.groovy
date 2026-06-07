@@ -1,10 +1,12 @@
 package com.nodlify.iam.infrastructure
 
+import com.nodlify.iam.application.CreateUserCommand
+import com.nodlify.iam.application.UserData
 import com.nodlify.iam.application.UserUseCase
-import com.nodlify.iam.domain.User
-import com.nodlify.iam.domain.UserData
 import com.nodlify.iam.domain.UserNotFoundException
 import com.nodlify.shared.domain.Identifier
+import com.nodlify.shared.domain.Property
+import com.nodlify.shared.exception.IllegalValueException
 import com.nodlify.test.mapper.JsonMapper
 import com.nodlify.test.type.MvcSpec
 import org.spockframework.spring.SpringBean
@@ -34,10 +36,10 @@ class UserApiMvcSpec extends MvcSpec implements JsonMapper {
         given:
         def user = SOME_USER
         def admin = SOME_ADMIN
-        def page = new PageImpl<User>([admin, user], PageRequest.of(0, 20), 2)
+        def page = new PageImpl<UserData>([UserData.from(admin), UserData.from(user)], PageRequest.of(0, 20), 2)
 
         when:
-        def response = mvc.perform(get("/api/v1/iam/users")
+        def response = mvc.perform(get("/api/v1/users")
                 .param("page", "0")
                 .param("size", "20"))
                 .andDo(print())
@@ -61,13 +63,13 @@ class UserApiMvcSpec extends MvcSpec implements JsonMapper {
         def user = SOME_USER
 
         when:
-        def response = mvc.perform(get("/api/v1/iam/users/${user.id.value}"))
+        def response = mvc.perform(get("/api/v1/users/${user.id.value}"))
                 .andDo(print())
                 .andReturn()
                 .getResponse()
 
         then:
-        1 * userUseCase.getUserById(user.id.value) >> user
+        1 * userUseCase.getUserById(user.id.value) >> UserData.from(user)
 
         and:
         response.status == 200
@@ -84,14 +86,16 @@ class UserApiMvcSpec extends MvcSpec implements JsonMapper {
         def request = new CreateUserRequest("email@email.com", "Password1", "Admin")
 
         when:
-        def response = mvc.perform(post("/api/v1/iam/users")
+        def response = mvc.perform(post("/api/v1/users")
                 .content(toJson(request)).contentType(APPLICATION_JSON))
                 .andDo(print())
                 .andReturn()
                 .getResponse()
 
         then:
-        1 * userUseCase.createUser(_ as User) >> { User user -> return user }
+        1 * userUseCase.createUser(_ as CreateUserCommand) >> { CreateUserCommand command ->
+            new UserData(Identifier.generate().value, command.email(), command.displayName(), ["USER"])
+        }
 
         and:
         response.status == 201
@@ -107,13 +111,18 @@ class UserApiMvcSpec extends MvcSpec implements JsonMapper {
         def request = new CreateUserRequest("incorrect@", "Password1", "Admin")
 
         when:
-        def response = mvc.perform(post("/api/v1/iam/users")
+        def response = mvc.perform(post("/api/v1/users")
                 .content(toJson(request)).contentType(APPLICATION_JSON))
                 .andDo(print())
                 .andReturn()
                 .getResponse()
 
         then:
+        1 * userUseCase.createUser(_ as CreateUserCommand) >> {
+            throw new IllegalValueException(Property.of("email", "incorrect@"), "Invalid email format")
+        }
+
+        and:
         response.status == 400
 
         and:
@@ -121,7 +130,7 @@ class UserApiMvcSpec extends MvcSpec implements JsonMapper {
         body.title == "Validation Error"
         body.status == 400
         body.detail == "Invalid email format"
-        body.instance.contains("/api/v1/iam/users")
+        body.instance.contains("/api/v1/users")
         !body.traceId.isBlank()
 
         and:
@@ -137,7 +146,7 @@ class UserApiMvcSpec extends MvcSpec implements JsonMapper {
         def id = Identifier.generate()
 
         when:
-        def response = mvc.perform(get("/api/v1/iam/users/${id.value}"))
+        def response = mvc.perform(get("/api/v1/users/${id.value}"))
                 .andDo(print())
                 .andReturn()
                 .getResponse()
@@ -153,7 +162,7 @@ class UserApiMvcSpec extends MvcSpec implements JsonMapper {
         body.title == "Resource Not Found"
         body.status == 404
         body.detail == "User not found"
-        body.instance.contains("/api/v1/iam/users")
+        body.instance.contains("/api/v1/users")
         !body.traceId.isBlank()
 
         and:
@@ -169,7 +178,7 @@ class UserApiMvcSpec extends MvcSpec implements JsonMapper {
         def id = Identifier.generate()
 
         when:
-        def response = mvc.perform(delete("/api/v1/iam/users/${id.value}"))
+        def response = mvc.perform(delete("/api/v1/users/${id.value}"))
                 .andDo(print())
                 .andReturn()
                 .getResponse()
@@ -186,7 +195,7 @@ class UserApiMvcSpec extends MvcSpec implements JsonMapper {
         def id = Identifier.generate()
 
         when:
-        def response = mvc.perform(delete("/api/v1/iam/users/${id.value}"))
+        def response = mvc.perform(delete("/api/v1/users/${id.value}"))
                 .andDo(print())
                 .andReturn()
                 .getResponse()
@@ -202,7 +211,7 @@ class UserApiMvcSpec extends MvcSpec implements JsonMapper {
         body.title == "Resource Not Found"
         body.status == 404
         body.detail == "User not found"
-        body.instance.contains("/api/v1/iam/users")
+        body.instance.contains("/api/v1/users")
         !body.traceId.isBlank()
 
         and:

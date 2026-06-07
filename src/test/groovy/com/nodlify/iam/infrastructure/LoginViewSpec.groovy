@@ -1,7 +1,7 @@
 package com.nodlify.iam.infrastructure
 
+import com.nodlify.iam.application.CreateUserCommand
 import com.nodlify.iam.application.UserUseCase
-import com.nodlify.iam.domain.User
 import spock.lang.Specification
 
 class LoginViewSpec extends Specification {
@@ -19,10 +19,10 @@ class LoginViewSpec extends Specification {
         def result = view.register("new@email.com", "Password1", "Sofia Reyes")
 
         then:
-        1 * userUseCase.createUser(_ as User) >> { User user ->
-            assert user.email.value == "new@email.com"
-            assert user.displayName.value == "Sofia Reyes"
-            return user
+        1 * userUseCase.createUser(_ as CreateUserCommand) >> { CreateUserCommand command ->
+            assert command.email() == "new@email.com"
+            assert command.displayName() == "Sofia Reyes"
+            return null
         }
 
         and:

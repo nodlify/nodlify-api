@@ -1,0 +1,46 @@
+.settings .cp-section {
+  padding-left: 0;
+}
+
+.settings-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 14px;
+}
+
+.settings-label {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ink);
+}
+
+.settings .cp-input:disabled {
+  background: var(--bg-2);
+  color: var(--ink-2);
+  cursor: not-allowed;
+}
+
+.settings-actions {
+  margin-top: 8px;
+}
+
+.settings-status {
+  margin: 14px 0 4px;
+  padding: 10px 14px;
+  border-radius: 8px;
+  font-size: 13.5px;
+  border: 0.5px solid var(--line);
+}
+
+.settings-status.success {
+  background: var(--yes-soft);
+  color: var(--yes);
+  border-color: color-mix(in srgb, var(--yes) 35%, transparent);
+}
+
+.settings-status.error {
+  background: var(--no-soft);
+  color: var(--no);
+  border-color: color-mix(in srgb, var(--no) 35%, transparent);
+}

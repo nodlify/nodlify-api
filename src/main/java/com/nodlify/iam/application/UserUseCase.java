@@ -1,19 +1,24 @@
 package com.nodlify.iam.application;
 
 
-import com.nodlify.iam.domain.User;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
 public interface UserUseCase {
 
-    User getUserById(String id);
+    UserData getUserById(String id);
 
-    User getUserByEmail(String email);
+    UserData getUserByEmail(String email);
 
-    Page<User> getAllUsers(Pageable pageable);
+    Page<UserData> getAllUsers(Pageable pageable);
 
-    User createUser(User user);
+    UserData createUser(CreateUserCommand command);
+
+    UserData createAdmin(CreateUserCommand command);
 
     void deleteUser(String id);
+
+    UserData changeDisplayName(String email, ChangeDisplayNameCommand command);
+
+    void changePassword(String email, ChangePasswordCommand command);
 }

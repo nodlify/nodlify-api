@@ -89,8 +89,8 @@
                     </div>
                     <div class="mt-1 flex gap-[3px]">
                         <template x-for="i in [1,2,3]" :key="i">
-              <span class="h-[3px] flex-1 rounded-sm transition-colors"
-                    :class="strength >= i ? { 1: 'bg-[var(--no)]', 2: 'bg-[var(--maybe)]', 3: 'bg-[var(--yes)]' }[strength] : 'bg-[var(--line-2)]'"></span>
+                        <span class="h-[3px] flex-1 rounded-sm transition-colors"
+                                :class="strength >= i ? { 1: 'bg-[var(--no)]', 2: 'bg-[var(--maybe)]', 3: 'bg-[var(--yes)]' }[strength] : 'bg-[var(--line-2)]'"></span>
                         </template>
                     </div>
                 </div>
@@ -98,10 +98,10 @@
                 <label class="checkbox-row">
                     <input type="checkbox" x-model="agree" name="agree"/>
                     <span>I agree to the
-            <a href="#" class="border-b-[0.5px] border-[var(--line)] text-[var(--ink)]">terms</a>
-            and
-            <a href="#" class="border-b-[0.5px] border-[var(--line)] text-[var(--ink)]">privacy policy</a>
-          </span>
+                        <a href="#" class="border-b-[0.5px] border-[var(--line)] text-[var(--ink)]">terms</a>
+                        and
+                        <a href="#" class="border-b-[0.5px] border-[var(--line)] text-[var(--ink)]">privacy policy</a>
+                    </span>
                 </label>
 
                 <button type="submit" class="btn auth-submit"

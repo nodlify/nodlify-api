@@ -21,7 +21,7 @@ import static org.springframework.format.annotation.DateTimeFormat.ISO.DATE_TIME
 
 
 @RestController
-@RequestMapping("/api/v1/observability/problems")
+@RequestMapping("/api/v1/problems")
 @AllArgsConstructor
 @Tag(name = "Admin - Problems", description = "Problem and error reporting endpoints")
 class ProblemLogApi {

@@ -100,6 +100,7 @@
 }
 
 .avatar-menu-action {
+  display: block;
   width: 100%;
   appearance: none;
   border: none;
@@ -109,6 +110,7 @@
   font: inherit;
   font-size: 13.5px;
   color: var(--ink-2);
+  text-decoration: none;
   cursor: pointer;
 }
 

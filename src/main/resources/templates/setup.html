@@ -156,7 +156,7 @@
                 this.loading = true;
                 this.error = null;
                 try {
-                    const res = await fetch('/api/v1/iam/setup/domain', {
+                    const res = await fetch('/api/v1/setup/domain', {
                         method: 'POST',
                         headers: {'Content-Type': 'application/json'},
                         body: JSON.stringify({domain: this.domain.trim()})
@@ -174,7 +174,7 @@
                 this.loading = true;
                 this.error = null;
                 try {
-                    const res = await fetch('/api/v1/iam/setup/admin', {
+                    const res = await fetch('/api/v1/setup/admin', {
                         method: 'POST',
                         headers: {'Content-Type': 'application/json'},
                         body: JSON.stringify({email: this.email.trim(), password: this.password})
@@ -192,7 +192,7 @@
                 this.loading = true;
                 this.error = null;
                 try {
-                    const res = await fetch('/api/v1/iam/setup', {method: 'POST'});
+                    const res = await fetch('/api/v1/setup', {method: 'POST'});
                     if (!res.ok) throw new Error(await res.text().catch(() => null) || 'Setup finalisation failed.');
                     window.location.href = '/login';
                 } catch (e) {

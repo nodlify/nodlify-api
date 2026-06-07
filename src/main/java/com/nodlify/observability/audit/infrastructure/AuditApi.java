@@ -23,7 +23,7 @@ import static org.springframework.format.annotation.DateTimeFormat.ISO.DATE_TIME
 
 @Slf4j
 @RestController
-@RequestMapping("/api/v1/observability/audit")
+@RequestMapping("/api/v1/audit")
 @AllArgsConstructor
 @Tag(name = "Admin - Audit", description = "Audit event endpoints")
 class AuditApi {

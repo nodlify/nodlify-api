@@ -1,11 +1,8 @@
 package com.nodlify.iam.infrastructure;
 
+import com.nodlify.iam.application.CreateUserCommand;
+import com.nodlify.iam.application.UserData;
 import com.nodlify.iam.application.UserUseCase;
-import com.nodlify.iam.domain.Password;
-import com.nodlify.iam.domain.User;
-import com.nodlify.iam.domain.UserData;
-import com.nodlify.shared.domain.DisplayName;
-import com.nodlify.shared.domain.Email;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
@@ -23,7 +20,7 @@ import org.springframework.web.bind.annotation.*;
 
 
 @RestController
-@RequestMapping("/api/v1/iam/users")
+@RequestMapping("/api/v1/users")
 @AllArgsConstructor
 @Tag(name = "Admin - Users", description = "User administration endpoints")
 class UserApi {
@@ -46,9 +43,7 @@ class UserApi {
     ))
     @Operation(summary = "List users", description = "Returns a list of all users")
     ResponseEntity<Page<UserData>> getAllUsers(@ParameterObject Pageable pageable) {
-        var users = userUseCase.getAllUsers(pageable)
-                .map(UserData::from);
-        return ResponseEntity.ok(users);
+        return ResponseEntity.ok(userUseCase.getAllUsers(pageable));
     }
 
     @GetMapping("/{id}")
@@ -67,9 +62,7 @@ class UserApi {
     ))
     @Operation(summary = "Get user by id", description = "Returns details of a user by id")
     ResponseEntity<UserData> getById(@PathVariable String id) {
-        var user = userUseCase.getUserById(id);
-        var response = UserData.from(user);
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(userUseCase.getUserById(id));
     }
 
     @PostMapping
@@ -79,14 +72,10 @@ class UserApi {
     })
     @Operation(summary = "Create user", description = "Creates a new user account")
     ResponseEntity<UserData> create(@RequestBody CreateUserRequest request) {
-        var user = new User(
-                Email.of(request.email()),
-                Password.fromPlaintext(request.password()),
-                DisplayName.of(request.displayName())
+        var created = userUseCase.createUser(
+                new CreateUserCommand(request.email(), request.password(), request.displayName())
         );
-
-        var created = userUseCase.createUser(user);
-        return new ResponseEntity<>(UserData.from(created), HttpStatus.CREATED);
+        return new ResponseEntity<>(created, HttpStatus.CREATED);
     }
 
     @DeleteMapping("/{id}")

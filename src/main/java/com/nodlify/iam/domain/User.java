@@ -73,6 +73,14 @@ public class User {
         return this;
     }
 
+    public User rename(DisplayName displayName) {
+        return this.withDisplayName(displayName);
+    }
+
+    public User changePassword(Password password) {
+        return this.withPassword(password);
+    }
+
     public List<String> getAuthoritiesAsString() {
         return authorities.stream()
                 .map(Authority::value)

@@ -20,7 +20,7 @@
             },
             async loadUserInfo() {
                 try {
-                    const response = await fetch('/api/v1/userinfo', {
+                    const response = await fetch('/api/v1/user', {
                         headers: { 'Accept': 'application/json' },
                         credentials: 'same-origin'
                     });
@@ -38,10 +38,8 @@
     <div class="wrap home-nav-inner">
         <a href="/"><span class="logo">nodlify<span class="dot">.</span></span></a>
         <nav class="home-nav-links">
-            <a href="/home" class="active">My polls</a>
-            <!--/* TODO: add settings page
-            <a href="#">Settings</a>
-            */-->
+            <a href="/home" th:text="#{nav.myPolls}"
+               :class="{ active: window.location.pathname.startsWith('/home') }">My polls</a>
         </nav>
         <div class="home-nav-right">
             <input class="search-input" type="search" placeholder="Search polls?"/>
@@ -63,6 +61,8 @@
                      x-cloak
                      role="menu">
                     <div class="avatar-menu-name" x-text="displayName || 'Profile'"></div>
+                    <a href="/settings" class="avatar-menu-action" role="menuitem"
+                       th:text="#{nav.settings}">Settings</a>
                     <form th:action="@{/logout}" method="post">
                         <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
                         <button type="submit" class="avatar-menu-action" role="menuitem">

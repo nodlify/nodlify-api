@@ -427,7 +427,7 @@
                 this.showLocationDropdown = true;
                 this.locationSearching = true;
                 try {
-                    const res = await fetch('/api/v1/geocoding/search?q=' + encodeURIComponent(q),
+                    const res = await fetch('/api/v1/locations/search?q=' + encodeURIComponent(q),
                             {headers: {'Accept': 'application/json'}, credentials: 'same-origin'});
                     this.locationResults = res.ok ? await res.json() : [];
                 } catch (_) {
@@ -470,7 +470,7 @@
                 }
                 this.mapSearchLoading = true;
                 try {
-                    const res = await fetch('/api/v1/geocoding/search?q=' + encodeURIComponent(q),
+                    const res = await fetch('/api/v1/locations/search?q=' + encodeURIComponent(q),
                             {headers: {'Accept': 'application/json'}, credentials: 'same-origin'});
                     this.mapSearchResults = res.ok ? await res.json() : [];
                 } catch (_) {
@@ -560,7 +560,7 @@
             async _reverseGeocode(latlng) {
                 const fallback = latlng.lat.toFixed(6) + ', ' + latlng.lng.toFixed(6);
                 try {
-                    const res = await fetch('/api/v1/geocoding/reverse?lat=' + latlng.lat + '&lon=' + latlng.lng,
+                    const res = await fetch('/api/v1/locations/reverse?lat=' + latlng.lat + '&lon=' + latlng.lng,
                             {headers: {'Accept': 'application/json'}, credentials: 'same-origin'});
                     const data = res.ok && res.status !== 204 ? await res.json() : null;
                     const address = (data && data.address) || fallback;

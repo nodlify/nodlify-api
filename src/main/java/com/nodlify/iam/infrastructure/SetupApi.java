@@ -1,10 +1,7 @@
 package com.nodlify.iam.infrastructure;
 
 import com.nodlify.iam.application.ApplicationSetupUseCase;
-import com.nodlify.iam.domain.Password;
-import com.nodlify.iam.domain.User;
-import com.nodlify.shared.domain.DisplayName;
-import com.nodlify.shared.domain.Email;
+import com.nodlify.iam.application.CreateUserCommand;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.AllArgsConstructor;
@@ -16,7 +13,7 @@ import static java.util.Objects.nonNull;
 
 
 @RestController
-@RequestMapping("/api/v1/iam/setup")
+@RequestMapping("/api/v1/setup")
 @AllArgsConstructor
 @Tag(name = "Admin - Setup", description = "Bootstrap endpoints for initial application configuration. Available only until setup is completed.")
 class SetupApi {
@@ -33,8 +30,6 @@ class SetupApi {
         ));
     }
 
-    record AppConfigResponse(String domainUrl, boolean setupCompleted) {}
-
     @PostMapping("/domain")
     @Operation(summary = "Set public domain/origin for the application")
     ResponseEntity<Void> setupDomain(@RequestBody SetupDomainRequest request) {
@@ -45,14 +40,10 @@ class SetupApi {
     @PostMapping("/admin")
     @Operation(summary = "Create initial admin user")
     ResponseEntity<Void> initializeAdminUser(@RequestBody CreateUserRequest request) {
-        var user = new User(
-                Email.of(request.email()),
-                Password.fromPlaintext(request.password()),
-                nonNull(request.displayName())
-                        ? DisplayName.of(request.displayName())
-                        : DisplayName.of(ADMIN)
+        var displayName = nonNull(request.displayName()) ? request.displayName() : ADMIN;
+        applicationSetupUseCase.setupAdmin(
+                new CreateUserCommand(request.email(), request.password(), displayName)
         );
-        applicationSetupUseCase.setupAdmin(user);
         return new ResponseEntity<>(HttpStatus.CREATED);
     }
 
@@ -62,4 +53,6 @@ class SetupApi {
         applicationSetupUseCase.completeSetup();
         return new ResponseEntity<>(HttpStatus.OK);
     }
+
+    record AppConfigResponse(String domainUrl, boolean setupCompleted) {}
 }

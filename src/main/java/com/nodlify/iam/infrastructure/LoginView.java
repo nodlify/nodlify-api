@@ -1,10 +1,7 @@
 package com.nodlify.iam.infrastructure;
 
+import com.nodlify.iam.application.CreateUserCommand;
 import com.nodlify.iam.application.UserUseCase;
-import com.nodlify.iam.domain.Password;
-import com.nodlify.iam.domain.User;
-import com.nodlify.shared.domain.DisplayName;
-import com.nodlify.shared.domain.Email;
 import com.nodlify.shared.web.DefaultView;
 import lombok.RequiredArgsConstructor;
 import org.springframework.ui.Model;
@@ -41,12 +38,7 @@ class LoginView {
             @RequestParam String password,
             @RequestParam String displayName
     ) {
-        var user = new User(
-                Email.of(email),
-                Password.fromPlaintext(password),
-                DisplayName.of(displayName)
-        );
-        userUseCase.createUser(user);
+        userUseCase.createUser(new CreateUserCommand(email, password, displayName));
 
         return "redirect:/login";
     }

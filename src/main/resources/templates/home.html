@@ -51,7 +51,7 @@
        },
        async loadUserInfo() {
          try {
-           const res = await fetch('/api/v1/userinfo', {
+           const res = await fetch('/api/v1/user', {
              headers: { 'Accept': 'application/json' },
              credentials: 'same-origin',
            });

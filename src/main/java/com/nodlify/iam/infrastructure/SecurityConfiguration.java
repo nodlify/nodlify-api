@@ -30,7 +30,6 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.OAuth2AuthorizationServerConfiguration;
 import org.springframework.security.core.userdetails.UserDetailsService;
-import org.springframework.security.crypto.factory.PasswordEncoderFactories;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.core.AuthorizationGrantType;
 import org.springframework.security.oauth2.core.ClientAuthenticationMethod;
@@ -71,7 +70,7 @@ import static org.springframework.security.config.Customizer.withDefaults;
 @RequiredArgsConstructor
 class SecurityConfiguration {
 
-    private static final String[] SETUP_ENDPOINTS = {"/api/v1/iam/setup/**"};
+    private static final String[] SETUP_ENDPOINTS = {"/api/v1/setup/**"};
 
     private final UserDetailsService userDetailsService;
     private final ApplicationSetupUseCase applicationSetupUseCase;
@@ -135,12 +134,10 @@ class SecurityConfiguration {
                                 "/reset-password",
 
                                 // public participant voting page
-                                "/vote/**",
-
-                                // public api
-                                "/api/v1/userinfo"
+                                "/vote/**"
 
                         ).permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/user").permitAll()
                         // anyone with the link can open a poll to vote — no account needed
                         .requestMatchers(HttpMethod.GET, "/api/v1/polls/*").permitAll()
                         .requestMatchers(SETUP_ENDPOINTS).access((authentication, _) -> {
@@ -156,9 +153,11 @@ class SecurityConfiguration {
                             return new AuthorizationDecision(isAdmin);
                         })
                         .requestMatchers(
-                                "/api/v1/iam/**",
-                                "/api/v1/observability/**",
-                                "/observability/**",
+                                "/api/v1/users/**",
+                                "/api/v1/audit/**",
+                                "/api/v1/problems/**",
+                                "/audit",
+                                "/problems",
                                 "/admin/**",
                                 "/admin"
                         ).hasAuthority("ADMIN")
@@ -214,14 +213,9 @@ class SecurityConfiguration {
     }
 
     @Bean
-    PasswordEncoder passwordEncoder() {
-        return PasswordEncoderFactories.createDelegatingPasswordEncoder();
-    }
-
-    @Bean
-    AuthenticationManager authenticationManager(UserDetailsService userDetailsService) {
+    AuthenticationManager authenticationManager(UserDetailsService userDetailsService, PasswordEncoder passwordEncoder) {
         var authenticationProvider = new DaoAuthenticationProvider(userDetailsService);
-        authenticationProvider.setPasswordEncoder(passwordEncoder());
+        authenticationProvider.setPasswordEncoder(passwordEncoder);
         var providerManager = new ProviderManager(authenticationProvider);
         providerManager.setEraseCredentialsAfterAuthentication(false);
 

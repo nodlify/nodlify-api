@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en"
+      xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout/main :: layout(
+          title=~{::title},
+          header=~{::header},
+          content=~{::main},
+          footer=~{fragments/footer :: footerMinimal},
+          scripts=~{::script}
+      )}"
+>
+<head>
+    <title th:text="|#{settings.title} · Nodlify|">Settings · Nodlify</title>
+</head>
+<body>
+
+<header th:fragment="header" class="cp-nav">
+    <div class="wrap cp-nav-inner">
+        <a href="/home" class="cp-back">
+            <span class="arrow inline-block rotate-180">→</span>
+            <span th:text="#{nav.backToHome}">Back to home</span>
+        </a>
+        <a href="/"><span class="logo">nodlify<span class="dot">.</span></span></a>
+        <span class="cp-step-meta" th:text="#{nav.settings}">Settings</span>
+    </div>
+</header>
+
+<div th:fragment="main"
+     class="settings"
+     x-data="{
+       email: '',
+       displayName: '',
+       displayNameForm: { displayName: '' },
+       passwordForm: { currentPassword: '', newPassword: '', confirmPassword: '' },
+       status: { type: '', message: '' },
+       saving: false,
+
+       t(key) {
+         return this.$store.i18n.t(key);
+       },
+       csrfHeaders() {
+         const token = document.querySelector('meta[name=_csrf]')?.content;
+         const header = document.querySelector('meta[name=_csrf_header]')?.content;
+         const headers = { 'Content-Type': 'application/json', 'Accept': 'application/json' };
+         if (token && header) headers[header] = token;
+         return headers;
+       },
+       notify(type, message) {
+         this.status = { type, message };
+         setTimeout(() => { if (this.status.message === message) this.status = { type: '', message: '' }; }, 4000);
+       },
+       async loadUserInfo() {
+         try {
+           const res = await fetch('/api/v1/user', {
+             headers: { 'Accept': 'application/json' },
+             credentials: 'same-origin',
+           });
+           if (!res.ok) return;
+           const user = await res.json();
+           this.email = user.email || '';
+           this.displayName = user.displayName || '';
+           this.displayNameForm.displayName = this.displayName;
+         } catch (_) {}
+       },
+       async saveDisplayName() {
+         this.saving = true;
+         try {
+           const res = await fetch('/api/v1/user/display-name', {
+             method: 'PATCH',
+             headers: this.csrfHeaders(),
+             credentials: 'same-origin',
+             body: JSON.stringify({ displayName: this.displayNameForm.displayName }),
+           });
+           if (!res.ok) {
+             const problem = await res.json().catch(() => ({}));
+             this.notify('error', problem.detail || this.t('settings.displayName.error'));
+             return;
+           }
+           const user = await res.json();
+           this.displayName = user.displayName || '';
+           this.notify('success', this.t('settings.displayName.updated'));
+         } catch (_) {
+           this.notify('error', this.t('settings.displayName.error'));
+         } finally {
+           this.saving = false;
+         }
+       },
+       async changePassword() {
+         if (this.passwordForm.newPassword !== this.passwordForm.confirmPassword) {
+           this.notify('error', this.t('settings.password.mismatch'));
+           return;
+         }
+         this.saving = true;
+         try {
+           const res = await fetch('/api/v1/user/password', {
+             method: 'PATCH',
+             headers: this.csrfHeaders(),
+             credentials: 'same-origin',
+             body: JSON.stringify({
+               currentPassword: this.passwordForm.currentPassword,
+               newPassword: this.passwordForm.newPassword,
+             }),
+           });
+           if (!res.ok) {
+             const problem = await res.json().catch(() => ({}));
+             this.notify('error', problem.detail || this.t('settings.password.error'));
+             return;
+           }
+           this.passwordForm = { currentPassword: '', newPassword: '', confirmPassword: '' };
+           this.notify('success', this.t('settings.password.changed'));
+         } catch (_) {
+           this.notify('error', this.t('settings.password.error'));
+         } finally {
+           this.saving = false;
+         }
+       }
+     }"
+     x-init="loadUserInfo()">
+
+    <div class="wrap">
+        <div class="cp-layout cp-layout-single">
+            <div class="cp-form">
+
+                <div class="cp-header">
+                    <span class="eyebrow" th:text="#{settings.eyebrow}">Account</span>
+                    <h1 th:text="#{settings.heading}">Your account</h1>
+                    <p th:text="#{settings.subtitle}">Update your profile and password.</p>
+                </div>
+
+                <div class="settings-status"
+                     x-show="status.message"
+                     x-cloak
+                     :class="status.type"
+                     x-text="status.message"
+                     role="status"></div>
+
+                <section class="cp-section">
+                    <div class="cp-section-head">
+                        <h2 class="cp-section-title" th:text="#{settings.profile}">Profile</h2>
+                    </div>
+                    <p class="cp-section-hint" th:text="#{settings.profile.hint}">Your basic account details.</p>
+
+                    <form @submit.prevent="saveDisplayName()">
+                        <div class="settings-field">
+                            <label class="settings-label" th:text="#{settings.email}">Email</label>
+                            <input class="cp-input" type="email" x-model="email" disabled autocomplete="email"/>
+                        </div>
+                        <div class="settings-field">
+                            <label class="settings-label" th:text="#{settings.displayName}">Display name</label>
+                            <input class="cp-input" type="text"
+                                   x-model="displayNameForm.displayName"
+                                   autocomplete="nickname"
+                                   th:placeholder="#{settings.displayName.placeholder}"
+                                   required/>
+                        </div>
+                        <div class="settings-actions">
+                            <button type="submit" class="btn" :disabled="saving" th:text="#{settings.save}">Save changes</button>
+                        </div>
+                    </form>
+                </section>
+
+                <section class="cp-section">
+                    <div class="cp-section-head">
+                        <h2 class="cp-section-title" th:text="#{settings.password}">Password</h2>
+                    </div>
+                    <p class="cp-section-hint" th:text="#{settings.password.hint}">Choose a strong password.</p>
+
+                    <form @submit.prevent="changePassword()">
+                        <div class="settings-field">
+                            <label class="settings-label" th:text="#{settings.currentPassword}">Current password</label>
+                            <input class="cp-input" type="password"
+                                   x-model="passwordForm.currentPassword"
+                                   autocomplete="current-password"
+                                   required/>
+                        </div>
+                        <div class="settings-field">
+                            <label class="settings-label" th:text="#{settings.newPassword}">New password</label>
+                            <input class="cp-input" type="password"
+                                   x-model="passwordForm.newPassword"
+                                   autocomplete="new-password"
+                                   required/>
+                        </div>
+                        <div class="settings-field">
+                            <label class="settings-label" th:text="#{settings.confirmPassword}">Confirm new password</label>
+                            <input class="cp-input" type="password"
+                                   x-model="passwordForm.confirmPassword"
+                                   autocomplete="new-password"
+                                   required/>
+                        </div>
+                        <div class="settings-actions">
+                            <button type="submit" class="btn" :disabled="saving" th:text="#{settings.changePassword}">Change password</button>
+                        </div>
+                    </form>
+                </section>
+
+            </div>
+        </div>
+    </div>
+
+</div>
+
+</body>
+</html>
