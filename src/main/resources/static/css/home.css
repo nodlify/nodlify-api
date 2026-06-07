@@ -386,10 +386,12 @@
   font-size: 14.5px;
   font-weight: 500;
   color: var(--ink);
+  text-decoration: none;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+.poll-row-title a.title:hover { text-decoration: underline; }
 .poll-row-title .meta {
   font-family: var(--font-mono);
   font-size: 11px;
@@ -496,6 +498,8 @@
   transition: background 0.15s, color 0.15s;
 }
 .row-action:hover { background: var(--bg-2); color: var(--ink); }
+.row-action:disabled { cursor: wait; opacity: 0.45; }
+.row-action-delete:hover { background: var(--no-soft); color: var(--no); }
 .row-action img { display: block; opacity: 0.6; transition: opacity 0.15s; }
 .row-action:hover img { opacity: 1; }
 

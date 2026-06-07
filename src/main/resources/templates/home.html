@@ -20,17 +20,21 @@
        filter: 'active',
        sort: 'recent',
        displayName: '',
-       polls: [
-         { id: '4hT9k', title: 'Q4 planning offsite',          status: 'active',  options: 4, voted: 6,  invited: 8,  avatars: ['AK','MD','LW','TL','SR','JL'] },
-         { id: '9mP2x', title: 'Team dinner — November',       status: 'active',  options: 4, voted: 5,  invited: 8,  avatars: ['AK','MD','LW','SR','PS'] },
-         { id: '2nB7r', title: 'Design review — next sprint',  status: 'decided', options: 5, voted: 7,  invited: 7,  avatars: ['AK','MD','LW','TL','SR','JL','HB'] },
-         { id: '8kT4w', title: 'Founders coffee chat',         status: 'active',  options: 3, voted: 2,  invited: 4,  avatars: ['AK','SR'] },
-         { id: '5jR3v', title: 'Open source sync (monthly)',   status: 'decided', options: 4, voted: 11, invited: 12, avatars: ['AK','MD','LW','TL','SR','JL','PS','HB'] },
-         { id: '1aB6c', title: 'Q1 OKR workshop',              status: 'active',  options: 3, voted: 1,  invited: 6,  avatars: ['SR'] },
-         { id: '7gH9z', title: 'Eng all‑hands — October',      status: 'closed',  options: 4, voted: 14, invited: 18, avatars: ['AK','MD','LW','TL','SR'] }
-       ],
+       polls: [],
+       loading: true,
+       deletingId: null,
        get filtered() {
-         return this.filter === 'all' ? this.polls : this.polls.filter(p => p.status === this.filter);
+         const polls = this.filter === 'all' ? this.polls : this.polls.filter(p => p.status === this.filter);
+         return [...polls].sort((a, b) => {
+           if (this.sort === 'participants') return b.participants - a.participants;
+           if (this.sort === 'closing') {
+             if (!a.closesAt) return 1;
+             if (!b.closesAt) return -1;
+             return new Date(a.closesAt) - new Date(b.closesAt);
+           }
+           if (this.sort === 'alpha') return a.title.localeCompare(b.title);
+           return new Date(b.createdAt) - new Date(a.createdAt);
+         });
        },
        get counts() {
          return {
@@ -40,12 +44,11 @@
            closed:  this.polls.filter(p => p.status === 'closed').length
          };
        },
-       get totalVoters() { return this.polls.reduce((s, p) => s + p.voted, 0); },
-       get decisionsThisMonth() { return this.polls.filter(p => p.status === 'decided').length; },
+       get totalParticipants() { return this.polls.reduce((sum, poll) => sum + poll.participants, 0); },
        get summary() {
          return this.$store.i18n.t('home.summary')
            .replace('{active}', this.counts.active)
-           .replace('{votes}', this.totalVoters);
+           .replace('{participants}', this.totalParticipants);
        },
        greeting() {
          const h = new Date().getHours();
@@ -64,6 +67,47 @@
            const user = await res.json();
            this.displayName = user.displayName || '';
          } catch (_) {}
+       },
+       initials(name) {
+         const value = (name || '').trim();
+         if (!value) return '?';
+         const parts = value.split(/\s+/);
+         if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+         return parts.slice(0, 2).map(p => p.charAt(0).toUpperCase()).join('');
+       },
+       pollUrl(pollId) {
+         return window.location.origin + '/vote/' + pollId;
+       },
+       closingDate(poll) {
+         if (poll.votingDeadline) return poll.votingDeadline;
+         const endDates = (poll.options || []).map(option => option.endAt).filter(Boolean);
+         return endDates.length ? endDates.sort().at(-1) : null;
+       },
+       async loadPolls() {
+         try {
+           const res = await fetch('/api/v1/polls', {
+             headers: { 'Accept': 'application/json' },
+             credentials: 'same-origin',
+           });
+           if (!res.ok) return;
+           const data = await res.json();
+           const statusMap = { VOTING: 'active', CLOSED: 'closed', DECIDED: 'decided' };
+           this.polls = data.map(p => {
+             const participants = p.participants || [];
+             return {
+               id: p.id,
+               title: p.title,
+               status: statusMap[p.status] || 'active',
+               options: (p.options || []).length,
+               participants: participants.length,
+               avatars: participants.slice(0, 6).map(x => this.initials(x.name)),
+               createdAt: p.createdAt,
+               closesAt: this.closingDate(p),
+             };
+           });
+         } catch (_) {} finally {
+           this.loading = false;
+         }
        },
        csrfHeaders() {
          const token = document.querySelector('meta[name=_csrf]')?.content;
@@ -87,14 +131,34 @@
              title: data.title,
              status: 'active',
              options: (data.options || []).length,
-             voted: 0,
-             invited: 0,
+             participants: 0,
              avatars: [],
+             createdAt: data.createdAt,
+             closesAt: this.closingDate(data),
            });
          } catch (_) {}
+       },
+       async removePoll(poll) {
+         const message = this.$store.i18n.t('home.delete.confirm').replace('{title}', poll.title);
+         if (!window.confirm(message)) return;
+
+         this.deletingId = poll.id;
+         try {
+           const res = await fetch('/api/v1/polls/' + encodeURIComponent(poll.id), {
+             method: 'DELETE',
+             headers: this.csrfHeaders(),
+             credentials: 'same-origin',
+           });
+           if (!res.ok) throw new Error('delete failed');
+           this.polls = this.polls.filter(item => item.id !== poll.id);
+         } catch (_) {
+           window.alert(this.$store.i18n.t('home.delete.error'));
+         } finally {
+           this.deletingId = null;
+         }
        }
      }"
-     x-init="loadUserInfo()">
+     x-init="loadUserInfo(); loadPolls()">
 
     <div class="wrap">
         <div class="home-header">
@@ -132,7 +196,7 @@
                 <span></span>
             </div>
 
-            <template x-if="filtered.length === 0">
+            <template x-if="!loading && filtered.length === 0">
                 <div class="empty-state">
                     <h3 class="empty-title" th:text="#{home.empty.title}">No polls here yet</h3>
                     <p th:text="#{home.empty.text}">Polls you create will show up in this view.</p>
@@ -143,9 +207,9 @@
             <template x-for="poll in filtered" :key="poll.id">
                 <div class="poll-row">
                     <div class="poll-row-title">
-                        <span class="title" x-text="poll.title"></span>
+                        <a class="title" :href="'/vote/' + poll.id" x-text="poll.title"></a>
                         <span class="meta">
-              <span x-text="'nodlify.com/p/' + poll.id"></span>
+              <span x-text="pollUrl(poll.id)"></span>
               <template x-if="poll.options > 0">
                 <span><span class="sep">·</span> <span x-text="poll.options + ' ' + $store.i18n.t('home.options')"></span></span>
               </template>
@@ -161,17 +225,26 @@
                         <template x-for="(a, i) in poll.avatars.slice(0, 3)" :key="i">
                             <span class="avatar" x-text="a"></span>
                         </template>
-                        <template x-if="poll.invited - Math.min(poll.avatars.length, 3) > 0">
-                            <span class="more" x-text="'+' + (poll.invited - Math.min(poll.avatars.length, 3))"></span>
+                        <template x-if="poll.participants - Math.min(poll.avatars.length, 3) > 0">
+                            <span class="more" x-text="'+' + (poll.participants - Math.min(poll.avatars.length, 3))"></span>
                         </template>
                     </div>
 
                     <div class="row-actions">
-                        <button class="row-action" @click="duplicate(poll)"
+                        <a class="row-action" :href="'/poll/' + poll.id"
+                           th:attr="aria-label=#{home.edit},title=#{home.edit}">
+                            <img th:src="@{/icons/settings.svg}" width="18" height="18" alt="" aria-hidden="true">
+                        </a>
+                        <button class="row-action" @click.stop="duplicate(poll)"
                                 th:attr="aria-label=#{home.duplicate},title=#{home.duplicate}">
                             <img th:src="@{/icons/duplicate.svg}" width="18" height="18" alt="" aria-hidden="true">
                         </button>
-                        <button class="row-action" th:attr="aria-label=#{home.more},title=#{home.more}">⋯</button>
+                        <button class="row-action row-action-delete"
+                                @click.stop="removePoll(poll)"
+                                :disabled="deletingId === poll.id"
+                                th:attr="aria-label=#{home.delete},title=#{home.delete}">
+                            <span aria-hidden="true" x-text="deletingId === poll.id ? '…' : '×'"></span>
+                        </button>
                     </div>
                 </div>
             </template>

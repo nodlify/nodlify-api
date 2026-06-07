@@ -18,7 +18,7 @@
     <div class="wrap cp-nav-inner">
         <a href="/home" class="cp-back"><span class="arrow inline-block rotate-180">→</span> <span th:text="#{poll.backToMyPolls}">Back to my polls</span></a>
         <a href="/"><span class="logo">nodlify<span class="dot">.</span></span></a>
-        <span class="cp-step-meta" th:text="#{poll.manageMeta}">Manage</span>
+        <span class="cp-step-meta" th:text="#{poll.manageMeta}">Editing</span>
     </div>
 </header>
 
@@ -49,9 +49,14 @@
                 <div class="cp-form">
 
                     <div class="cp-header">
-                        <span class="eyebrow" th:text="#{poll.eyebrow}">Manage poll</span>
-                        <h1 x-text="title"></h1>
-                        <p x-show="description" x-text="description"></p>
+                        <span class="eyebrow" th:text="#{poll.eyebrow}">Poll editor</span>
+                        <h1 th:text="#{poll.editTitle}">Edit poll</h1>
+                        <p x-text="$store.i18n.t('poll.editing').replace('{title}', title)"></p>
+                    </div>
+
+                    <div class="poll-edit-notice mb-8">
+                        <strong th:text="#{poll.editMode}">Edit mode</strong>
+                        <span th:text="#{poll.editMode.hint}">Changes to date options are saved automatically.</span>
                     </div>
 
                     <div class="cp-link-card mb-8 max-w-none">
@@ -59,6 +64,26 @@
                         <button class="btn btn-sm" type="button" @click="copyLink()"
                                 x-text="copied ? $store.i18n.t('poll.copied') : $store.i18n.t('cp.success.copy')">Copy
                         </button>
+                    </div>
+
+                    <div class="flex flex-wrap items-center justify-between gap-3 mb-8">
+                        <div class="flex items-center gap-2">
+                            <span th:text="#{poll.statusLabel}">Status</span>
+                            <span class="status-badge"
+                                  :class="{ active: status === 'VOTING', decided: status === 'DECIDED', closed: status === 'CLOSED' }"
+                                  x-text="$store.i18n.t('poll.status.' + (status || 'VOTING').toLowerCase())"></span>
+                        </div>
+                        <div class="flex flex-wrap gap-2">
+                            <button class="btn btn-sm" type="button" :disabled="busy"
+                                    x-show="status !== 'DECIDED'" @click="changeStatus('DECIDED')"
+                                    x-text="$store.i18n.t('poll.markDecided')">Mark as decided</button>
+                            <button class="btn btn-sm btn-ghost" type="button" :disabled="busy"
+                                    x-show="status !== 'CLOSED'" @click="changeStatus('CLOSED')"
+                                    x-text="$store.i18n.t('poll.closePoll')">Close poll</button>
+                            <button class="btn btn-sm btn-ghost" type="button" :disabled="busy"
+                                    x-show="status !== 'VOTING'" @click="changeStatus('VOTING')"
+                                    x-text="$store.i18n.t('poll.reopen')">Reopen</button>
+                        </div>
                     </div>
 
                     <section class="cp-section">
@@ -112,34 +137,32 @@
                                 </div>
                             </template>
 
-                            <template x-for="(draft, i) in drafts" :key="'draft-' + i">
+                            <template x-for="(draft, i) in drafts" :key="draft.id">
                                 <div :class="'cp-opt' + (draft.allDay ? ' allday' : '')">
                                     <span class="cp-opt-handle">+</span>
                                     <input type="date" class="cp-opt-input"
-                                           :value="draft.date"
-                                           @change="drafts[i].date = $event.target.value"/>
+                                           :disabled="draft.saving"
+                                           x-model="draft.date"
+                                           @change="saveDraftWhenComplete(draft)"/>
                                     <template x-if="!draft.allDay">
                                         <input type="time" class="cp-opt-input time"
-                                               :value="draft.start"
-                                               @change="drafts[i].start = $event.target.value"/>
+                                               :disabled="draft.saving"
+                                               x-model="draft.start"
+                                               @change="saveDraftWhenComplete(draft)"/>
                                     </template>
                                     <template x-if="!draft.allDay">
                                         <input type="time" class="cp-opt-input time"
-                                               :value="draft.end"
-                                               @change="drafts[i].end = $event.target.value"/>
+                                               :disabled="draft.saving"
+                                               x-model="draft.end"
+                                               @change="saveDraftWhenComplete(draft)"/>
                                     </template>
                                     <template x-if="draft.allDay">
                                         <span class="allday-tag" x-text="$store.i18n.t('cp.allDay')">All day</span>
                                     </template>
-                                    <div class="flex items-center gap-1">
-                                        <button class="cp-opt-remove" type="button"
-                                                :disabled="busy || !draft.date"
-                                                @click="saveDraft(i)" th:attr="aria-label=#{common.save},title=#{common.save}">✓
-                                        </button>
-                                        <button class="cp-opt-remove" type="button"
-                                                @click="removeDraft(i)" th:attr="aria-label=#{poll.discard}">×
-                                        </button>
-                                    </div>
+                                    <button class="cp-opt-remove" type="button"
+                                            :disabled="draft.saving"
+                                            @click="removeDraft(draft)" th:attr="aria-label=#{poll.discard}">×
+                                    </button>
                                 </div>
                             </template>
                         </div>
@@ -150,10 +173,10 @@
                         </p>
 
                         <div class="mt-2 flex flex-wrap gap-2">
-                            <button class="cp-opt-add" type="button" @click="addDraft(false)">
+                            <button class="cp-opt-add" type="button" :disabled="busy" @click="addDraft(false)">
                                 <span class="plus">+</span> <span th:text="#{cp.addTimeRange}">Add time range</span>
                             </button>
-                            <button class="cp-opt-add" type="button" @click="addDraft(true)">
+                            <button class="cp-opt-add" type="button" :disabled="busy" @click="addDraft(true)">
                                 <span class="plus">+</span> <span th:text="#{cp.addWholeDay}">Add whole‑day option</span>
                             </button>
                         </div>
@@ -168,7 +191,6 @@
                 <div class="cp-status">
                     <span class="summary"
                           x-text="options.length + ' ' + $store.i18n.t('poll.datesPublished')"></span>
-                    <span class="small" x-show="drafts.length > 0" x-text="drafts.length + ' ' + $store.i18n.t('poll.unsaved')"></span>
                 </div>
                 <a :href="'/vote/' + pollId" class="btn"><span th:text="#{poll.preview}">Preview voting page</span> <span class="arrow">→</span></a>
             </div>
@@ -179,16 +201,11 @@
 
 <script th:fragment="script">
     function pollPage() {
-        function todayPlus(days) {
-            const d = new Date();
-            d.setDate(d.getDate() + days);
-            return d.toISOString().slice(0, 10);
-        }
-
         return {
             pollId: '',
             title: '',
             description: '',
+            status: '',
             options: [],
             form: {title: '', description: ''},
             drafts: [],
@@ -237,6 +254,7 @@
                     const data = await res.json();
                     this.title = data.title;
                     this.description = data.description || '';
+                    this.status = data.status || 'VOTING';
                     this.form.title = this.title;
                     this.form.description = this.description;
                     this.applyOptions((data.optionGroups || []).flatMap(group => group.options || []));
@@ -244,6 +262,30 @@
                     this.error = this.$store.i18n.t('poll.loadError');
                 } finally {
                     this.loading = false;
+                }
+            },
+
+            async changeStatus(next) {
+                if (this.busy) return;
+                this.busy = true;
+                this.error = '';
+                try {
+                    const res = await fetch('/api/v1/polls/' + encodeURIComponent(this.pollId) + '/status', {
+                        method: 'PATCH',
+                        headers: this.csrfHeaders(),
+                        credentials: 'same-origin',
+                        body: JSON.stringify({status: next}),
+                    });
+                    if (!res.ok) {
+                        this.error = this.$store.i18n.t('poll.statusError');
+                        return;
+                    }
+                    const data = await res.json();
+                    this.status = data.status || 'VOTING';
+                } catch (_) {
+                    this.error = this.$store.i18n.t('poll.statusError');
+                } finally {
+                    this.busy = false;
                 }
             },
 
@@ -283,23 +325,25 @@
             },
 
             addDraft(allDay) {
-                const lastDate = this.drafts.length
-                        ? this.drafts[this.drafts.length - 1].date
-                        : (this.options.length ? this.options[this.options.length - 1].startAt.slice(0, 10) : todayPlus(5));
-                let nextDate = todayPlus(5);
-                if (lastDate) {
-                    const d = new Date(lastDate + 'T00:00:00');
-                    d.setDate(d.getDate() + 1);
-                    nextDate = d.toISOString().slice(0, 10);
-                }
-                this.drafts.push({date: nextDate, start: '18:00', end: '19:30', allDay});
+                this.drafts.push({
+                    id: crypto.randomUUID(),
+                    date: '',
+                    start: '',
+                    end: '',
+                    allDay,
+                    saving: false,
+                });
             },
 
-            removeDraft(i) {
-                this.drafts.splice(i, 1);
+            removeDraft(draft) {
+                this.drafts = this.drafts.filter(item => item !== draft);
             },
 
-            toPayload(draft) {
+            draftComplete(draft) {
+                return draft.date && (draft.allDay || (draft.start && draft.end));
+            },
+
+            draftPayload(draft) {
                 if (draft.allDay) {
                     return {startAt: draft.date + 'T00:00:00Z', endAt: draft.date + 'T23:59:59Z', wholeDay: true};
                 }
@@ -310,17 +354,16 @@
                 };
             },
 
-            async saveDraft(i) {
-                const draft = this.drafts[i];
-                if (!draft.date || this.busy) return;
-                this.busy = true;
+            async saveDraftWhenComplete(draft) {
+                if (!this.draftComplete(draft) || draft.saving || this.busy) return;
+                draft.saving = true;
                 this.error = '';
                 try {
                     const res = await fetch('/api/v1/polls/' + encodeURIComponent(this.pollId) + '/options', {
                         method: 'POST',
                         headers: this.csrfHeaders(),
                         credentials: 'same-origin',
-                        body: JSON.stringify(this.toPayload(draft)),
+                        body: JSON.stringify(this.draftPayload(draft)),
                     });
                     if (!res.ok) {
                         this.error = this.$store.i18n.t('poll.addError');
@@ -328,11 +371,11 @@
                     }
                     const data = await res.json();
                     this.applyOptions(data.options);
-                    this.drafts.splice(i, 1);
+                    this.removeDraft(draft);
                 } catch (_) {
                     this.error = this.$store.i18n.t('poll.addError');
                 } finally {
-                    this.busy = false;
+                    draft.saving = false;
                 }
             },
 

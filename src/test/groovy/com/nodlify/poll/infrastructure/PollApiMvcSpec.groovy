@@ -1,5 +1,7 @@
 package com.nodlify.poll.infrastructure
 
+import com.nodlify.iam.application.UserData
+import com.nodlify.iam.application.UserUseCase
 import com.nodlify.poll.application.PollUseCase
 import com.nodlify.shared.domain.Property
 import com.nodlify.shared.exception.IllegalValueException
@@ -33,6 +35,9 @@ class PollApiMvcSpec extends MvcSpec {
     @SpringBean
     PollUseCase pollUseCase = Mock()
 
+    @SpringBean
+    UserUseCase userUseCase = Mock()
+
     @WithMockUser(authorities = "ROLE_USER")
     def "should be able to get poll"() {
         given:
@@ -47,9 +52,16 @@ class PollApiMvcSpec extends MvcSpec {
 
         then:
         1 * pollUseCase.getPoll(_) >> pollData
+        1 * userUseCase.getUserByEmail(ORGANIZER) >> new UserData(
+                "user-id",
+                ORGANIZER,
+                "John Organizer",
+                ["USER"]
+        )
 
         and:
         response.status == 200
+        response.toMap().organizer == "John Organizer"
     }
 
     @WithMockUser(authorities = "ROLE_USER")
@@ -69,7 +81,7 @@ class PollApiMvcSpec extends MvcSpec {
                 .getResponse()
 
         then:
-        1 * pollUseCase.createPoll(_, _, _, _, VOTING_DEADLINE, REQUIRE_PARTICIPANT_NAMES) >> pollData
+        1 * pollUseCase.createPoll(_, _, _, _, VOTING_DEADLINE) >> pollData
 
         and:
         response.status == 201

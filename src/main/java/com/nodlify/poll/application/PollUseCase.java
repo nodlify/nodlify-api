@@ -18,8 +18,7 @@ public interface PollUseCase {
             Description description,
             LocationDetails location,
             List<Option> options,
-            Instant votingDeadline,
-            boolean requireParticipantNames
+            Instant votingDeadline
     );
 
     PollData updateDetails(Identifier pollId, Title title, Description description);
@@ -32,9 +31,11 @@ public interface PollUseCase {
 
     void deletePoll(Identifier pollId);
 
-    PollData registerParticipant(Identifier pollId, Participant participant);
+    ParticipantData registerParticipant(Identifier pollId, Participant participant);
 
     PollData addLocation(Identifier pollId, LocationDetails location);
 
     PollData removeOption(Identifier pollId, Identifier optionId);
+
+    PollData changeStatus(Identifier pollId, PollStatus status);
 }

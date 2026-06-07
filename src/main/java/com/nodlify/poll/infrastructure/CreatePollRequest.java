@@ -33,8 +33,6 @@ class CreatePollRequest {
 
     private Instant votingDeadline;
 
-    private Boolean requireParticipantNames = true;
-
     @Valid
     private LocationPayload location;
 
@@ -51,10 +49,6 @@ class CreatePollRequest {
 
     LocationDetails toLocationDetails() {
         return location == null ? null : location.toLocationDetails();
-    }
-
-    boolean isRequireParticipantNames() {
-        return requireParticipantNames == null || requireParticipantNames;
     }
 
     List<OptionPayload> getOptions() {

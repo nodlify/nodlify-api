@@ -135,14 +135,15 @@ class SecurityConfiguration {
                                 "/register",
                                 "/setup",
                                 "/reset-password",
-
-                                // public participant voting page
                                 "/vote/**"
-
                         ).permitAll()
+                        // public api
                         .requestMatchers(HttpMethod.GET, "/api/v1/user").permitAll()
-                        // anyone with the link can open a poll to vote — no account needed
                         .requestMatchers(HttpMethod.GET, "/api/v1/polls/*").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/polls/*/votes").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/v1/polls/*/votes").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/v1/polls/*/participants").permitAll()
+                        //
                         .requestMatchers(SETUP_ENDPOINTS).access((authentication, _) -> {
                             if (!applicationSetupUseCase.setupCompleted()) {
                                 return new AuthorizationDecision(true);

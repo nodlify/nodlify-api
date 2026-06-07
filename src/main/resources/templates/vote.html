@@ -17,7 +17,6 @@
 <header th:fragment="header" class="cp-nav">
     <div class="wrap cp-nav-inner">
         <a href="/"><span class="logo">nodlify<span class="dot">.</span></span></a>
-        <span class="cp-step-meta" th:text="#{vote.poweredBy}">Powered by nodlify</span>
     </div>
 </header>
 
@@ -38,40 +37,11 @@
         </div>
     </div>
 
-    <div x-show="!loading && !error && submitted" x-cloak>
+    <div x-show="!loading && !error" x-cloak>
         <div class="vote-wrap">
-            <div class="vote-success">
-                <div class="big-check">✓</div>
-                <div>
-                    <span class="eyebrow mb-3 inline-flex" th:text="#{vote.recorded}">Vote recorded</span>
-                    <h2 x-text="$store.i18n.t('vote.thanks') + ', ' + name.split(' ')[0] + '.'">Thanks.</h2>
-                </div>
-                <p th:text="#{vote.successText}">The organizer will see your responses. You'll get a calendar invite once the time is locked.</p>
-
-                <div class="recap">
-                    <div class="recap-label" th:text="#{vote.yourVotes}">Your votes</div>
-                    <template x-for="opt in poll.options" :key="opt.id">
-                        <div class="recap-row">
-                            <div>
-                                <div class="recap-day" x-text="opt.day"></div>
-                                <div class="recap-time" x-text="opt.time"></div>
-                            </div>
-                            <span class="recap-vote" :class="votes[opt.id] || 'empty'"
-                                  x-text="votes[opt.id] ? $store.i18n.t('vote.' + votes[opt.id]) : '—'"></span>
-                        </div>
-                    </template>
-                </div>
-
-                <div class="mt-2 flex flex-wrap justify-center gap-3">
-                    <button class="btn btn-ghost" @click="submitted = false" th:text="#{vote.changeVotes}">Change my votes</button>
-                    <a href="/" class="btn"><span th:text="#{vote.createOwn}">Create your own poll</span> <span class="arrow">→</span></a>
-                </div>
+            <div class="vote-admin-actions" x-show="canEdit" x-cloak>
+                <a class="btn btn-sm btn-ghost" :href="'/poll/' + pollId" th:text="#{vote.editPoll}">Edit poll</a>
             </div>
-        </div>
-    </div>
-
-    <div x-show="!loading && !error && !submitted" x-cloak>
-        <div class="vote-wrap">
 
             <div class="vote-head">
                 <span class="eyebrow" th:text="#{vote.invited}">You've been invited to vote</span>
@@ -100,6 +70,9 @@
                 </div>
             </div>
 
+            <div class="vote-closed-banner" x-show="!votingOpen" x-cloak
+                 x-text="poll.status === 'DECIDED' ? $store.i18n.t('vote.decidedBanner') : $store.i18n.t('vote.closedBanner')"></div>
+
             <div class="options-section">
                 <div class="section-title">
                     <span th:text="#{vote.pick}">Pick what works for you</span>
@@ -111,19 +84,35 @@
                             <div class="option-info">
                                 <div class="option-day" x-text="opt.day"></div>
                                 <div class="option-time" x-text="opt.time"></div>
+                                <div class="option-summary">
+                                    <span class="yes">✓ <span x-text="resultCount(opt.id, 'yes')"></span></span>
+                                    <span class="maybe">? <span x-text="resultCount(opt.id, 'maybe')"></span></span>
+                                    <span class="no">✕ <span x-text="resultCount(opt.id, 'no')"></span></span>
+                                </div>
+                                <div class="option-voters" x-show="optionVotes(opt.id).length">
+                                    <template x-for="vote in optionVotes(opt.id)" :key="opt.id + '-' + vote.participantId">
+                                        <span class="option-voter" :class="vote.availability">
+                                            <span x-text="vote.name"></span>
+                                            <b x-text="voteGlyph(vote.availability)"></b>
+                                        </span>
+                                    </template>
+                                </div>
                             </div>
                             <div class="vote-buttons">
                                 <button class="vote-btn yes" :class="{ active: votes[opt.id] === 'yes' }"
+                                        :disabled="!votingOpen"
                                         @click="cast(opt.id, 'yes')" :aria-label="$store.i18n.t('vote.yes')">
                                     <span class="glyph">✓</span>
                                     <span class="lbl" x-text="$store.i18n.t('vote.yes')">Yes</span>
                                 </button>
                                 <button class="vote-btn maybe" :class="{ active: votes[opt.id] === 'maybe' }"
+                                        :disabled="!votingOpen"
                                         @click="cast(opt.id, 'maybe')" :aria-label="$store.i18n.t('vote.maybe')">
                                     <span class="glyph">?</span>
                                     <span class="lbl" x-text="$store.i18n.t('vote.maybe')">Maybe</span>
                                 </button>
                                 <button class="vote-btn no" :class="{ active: votes[opt.id] === 'no' }"
+                                        :disabled="!votingOpen"
                                         @click="cast(opt.id, 'no')" :aria-label="$store.i18n.t('vote.no')">
                                     <span class="glyph">✕</span>
                                     <span class="lbl" x-text="$store.i18n.t('vote.no')">No</span>
@@ -134,7 +123,7 @@
                 </div>
             </div>
 
-            <div class="name-section">
+            <div class="name-section" x-show="!identityKnown" x-cloak>
                 <div class="section-title mb-0">
                     <span th:text="#{vote.whoAreYou}">Who are you?</span>
                     <span class="hint" th:text="#{vote.whoHint}">Required so the organizer knows who voted</span>
@@ -142,7 +131,7 @@
                 <div class="row">
                     <label>
                         <span th:text="#{vote.yourName}">Your name</span>
-                        <input type="text" th:placeholder="#{vote.namePlaceholder}" x-model="name"/>
+                        <input type="text" th:placeholder="#{vote.namePlaceholder}" x-model="name" x-ref="nameInput"/>
                     </label>
                     <label>
                         <span><span th:text="#{vote.email}">Email</span> <span class="ml-1.5 text-xs text-[var(--muted-2)]" th:text="#{vote.optionalParen}">(optional)</span></span>
@@ -151,24 +140,46 @@
                 </div>
                 <span class="text-xs text-[var(--muted)]" th:text="#{vote.emailHint}">
           Add your email and we'll send you the calendar invite once the time is locked.
-        </span>
+                </span>
             </div>
 
-        </div>
+            <div class="vote-action-error" x-show="actionError" x-text="actionError" x-cloak></div>
 
-        <div class="vote-bottom">
-            <div class="vote-bottom-inner">
-                <div class="status">
-                    <span class="summary" x-text="statusMessage"></span>
-                    <span class="sub" x-text="yesCount + ' ' + $store.i18n.t('vote.yes') + ' · ' + maybeCount + ' ' + $store.i18n.t('vote.maybe') + ' · ' + noCount + ' ' + $store.i18n.t('vote.no')"></span>
+            <div class="poll-results">
+                <div class="poll-results-head">
+                    <span class="eyebrow" th:text="#{vote.results}">Results</span>
+                    <h3 th:text="#{vote.results.title}">Group availability</h3>
                 </div>
-                <button class="btn"
-                        :disabled="!canSubmit"
-                        :class="{ 'cursor-not-allowed opacity-40': !canSubmit }"
-                        @click="submitVotes()">
-                    <span th:text="#{vote.submit}">Submit my votes</span> <span class="arrow">→</span>
-                </button>
+                <div class="result-options">
+                    <template x-for="(opt, index) in sortedResultOptions" :key="'result-' + opt.id">
+                        <div class="result-option" :class="{ leading: index === 0 }">
+                            <div class="result-option-head">
+                                <div>
+                                    <strong x-text="opt.day"></strong>
+                                    <small x-text="opt.time"></small>
+                                </div>
+                                <div class="result-option-score">
+                                    <span class="yes">✓ <span x-text="resultCount(opt.id, 'yes')"></span></span>
+                                    <span class="maybe">? <span x-text="resultCount(opt.id, 'maybe')"></span></span>
+                                    <span class="no">✕ <span x-text="resultCount(opt.id, 'no')"></span></span>
+                                </div>
+                            </div>
+                            <div class="result-option-voters" x-show="optionVotes(opt.id).length">
+                                <template x-for="vote in optionVotes(opt.id)" :key="'result-' + opt.id + '-' + vote.participantId">
+                                    <span class="option-voter" :class="vote.availability">
+                                        <span x-text="vote.name"></span>
+                                        <b x-text="voteGlyph(vote.availability)"></b>
+                                    </span>
+                                </template>
+                            </div>
+                        </div>
+                    </template>
+                </div>
+                <p class="poll-results-empty" x-show="!collectedVotes.length" th:text="#{vote.noResults}">
+                    No votes yet.
+                </p>
             </div>
+
         </div>
     </div>
 
@@ -178,17 +189,113 @@
     function votePage() {
         return {
             pollId: '',
-            poll: {title: '', description: '', organizer: '', location: '', deadline: '', options: []},
+            poll: {title: '', description: '', organizer: '', location: '', deadline: '', status: 'VOTING', options: [], participants: []},
             votes: {},
+            tallies: {},
+            collectedVotes: [],
+            savingOptions: {},
+            voteVersions: {},
+            pollingTimer: null,
+            participantId: null,
+            currentUser: null,
             name: '',
             email: '',
             loading: true,
             error: '',
-            submitted: false,
+            actionError: '',
 
-            init() {
+            async init() {
                 this.pollId = this.$el.dataset.pollId;
-                this.loadPoll();
+                await Promise.all([this.loadPoll(), this.loadCurrentUser()]);
+                if (this.error) return;
+                this.restoreParticipant();
+                await this.fetchVotes();
+                this.pollingTimer = window.setInterval(() => this.fetchVotes(), 5000);
+            },
+
+            destroy() {
+                if (this.pollingTimer) window.clearInterval(this.pollingTimer);
+            },
+
+            csrfHeaders() {
+                const token = document.querySelector('meta[name="_csrf"]')?.content;
+                const header = document.querySelector('meta[name="_csrf_header"]')?.content;
+                const headers = {'Content-Type': 'application/json', 'Accept': 'application/json'};
+                if (token && header) headers[header] = token;
+                return headers;
+            },
+
+            async loadCurrentUser() {
+                try {
+                    const res = await fetch('/api/v1/user', {
+                        headers: {'Accept': 'application/json'},
+                        credentials: 'same-origin',
+                    });
+                    if (!res.ok || res.status === 204) return;
+                    this.currentUser = await res.json();
+                    this.name = this.currentUser.displayName || '';
+                    this.email = this.currentUser.email || '';
+                } catch (_) {}
+            },
+
+            get storageKey() {
+                return 'nodlify:vote:' + this.pollId;
+            },
+
+            restoreParticipant() {
+                if (this.currentUser) return;
+                try {
+                    const stored = JSON.parse(localStorage.getItem(this.storageKey));
+                    if (!stored?.participantId) return;
+                    this.participantId = stored.participantId;
+                    this.name = stored.name || '';
+                    this.email = stored.email || '';
+                    this.votes = stored.votes || {};
+                } catch (_) {}
+            },
+
+            rememberParticipant() {
+                if (this.currentUser) return;
+                localStorage.setItem(this.storageKey, JSON.stringify({
+                    participantId: this.participantId,
+                    name: this.name,
+                    email: this.email,
+                    votes: this.votes,
+                }));
+            },
+
+            async fetchVotes() {
+                try {
+                    const request = {headers: {'Accept': 'application/json'}, credentials: 'same-origin'};
+                    const [votesRes, pollRes] = await Promise.all([
+                        fetch('/api/v1/polls/' + encodeURIComponent(this.pollId) + '/votes', request),
+                        fetch('/api/v1/polls/' + encodeURIComponent(this.pollId), request),
+                    ]);
+                    if (!votesRes.ok) return;
+                    const votes = await votesRes.json();
+                    if (pollRes.ok) {
+                        const data = await pollRes.json();
+                        this.poll.participants = (data.participants || []).map(participant => ({
+                            id: participant.id,
+                            name: participant.name,
+                            email: participant.email || '',
+                        }));
+                    }
+                    const tallies = {};
+                    this.poll.options.forEach(o => tallies[o.id] = {yes: 0, maybe: 0, no: 0});
+                    votes.forEach(v => {
+                        const tally = tallies[v.optionId];
+                        if (!tally) return;
+                        const a = (v.availability || '').toLowerCase();
+                        if (a === 'yes') tally.yes++;
+                        else if (a === 'maybe') tally.maybe++;
+                        else if (a === 'no') tally.no++;
+                    });
+                    this.tallies = tallies;
+                    this.collectedVotes = votes;
+                    this.matchKnownParticipant();
+                    this.restoreVotesFromServer();
+                } catch (_) {}
             },
 
             async loadPoll() {
@@ -216,7 +323,13 @@
                         organizer: data.organizer || '',
                         location: data.location ? data.location.address : '',
                         deadline: data.votingDeadline ? this.$store.i18n.t('vote.closes') + ' ' + this.formatDeadline(data.votingDeadline) : '',
+                        status: data.status || 'VOTING',
                         options,
+                        participants: (data.participants || []).map(participant => ({
+                            id: participant.id,
+                            name: participant.name,
+                            email: participant.email || '',
+                        })),
                     };
                 } catch (_) {
                     this.error = this.$store.i18n.t('poll.loadError');
@@ -225,40 +338,150 @@
                 }
             },
 
-            cast(optId, value) {
-                this.votes[optId] = this.votes[optId] === value ? null : value;
+            matchKnownParticipant() {
+                if (this.participantId || !this.currentUser?.email) return;
+                const email = this.currentUser.email.toLowerCase();
+                const participant = this.poll.participants.find(item => item.email?.toLowerCase() === email);
+                if (participant) this.participantId = participant.id;
             },
 
+            restoreVotesFromServer() {
+                if (!this.participantId) return;
+                const restored = {};
+                this.collectedVotes
+                        .filter(vote => vote.participantId === this.participantId)
+                        .forEach(vote => restored[vote.optionId] = (vote.availability || '').toLowerCase());
+                Object.keys(this.savingOptions).forEach(optionId => restored[optionId] = this.votes[optionId]);
+                this.votes = restored;
+                this.rememberParticipant();
+            },
+
+            async ensureParticipant() {
+                if (this.participantId) return true;
+                if (!this.currentUser && !this.name.trim()) {
+                    this.actionError = this.$store.i18n.t('vote.addName');
+                    this.$nextTick(() => this.$refs.nameInput?.focus());
+                    return false;
+                }
+
+                const response = await fetch('/api/v1/polls/' + encodeURIComponent(this.pollId) + '/participants', {
+                    method: 'POST',
+                    headers: this.csrfHeaders(),
+                    credentials: 'same-origin',
+                    body: this.currentUser
+                            ? null
+                            : JSON.stringify({displayName: this.name.trim(), email: this.email.trim() || null}),
+                });
+                if (!response.ok) return false;
+
+                const participant = await response.json();
+                this.participantId = participant.id;
+                this.poll.participants = [
+                    ...this.poll.participants.filter(item => item.id !== participant.id),
+                    {
+                        id: participant.id,
+                        name: participant.name,
+                        email: participant.email || '',
+                    },
+                ];
+                this.rememberParticipant();
+                return true;
+            },
+
+            async cast(optId, value) {
+                if (!this.votingOpen || this.votes[optId] === value) return;
+                this.actionError = '';
+                const previous = this.votes[optId];
+                let version = null;
+
+                try {
+                    if (!await this.ensureParticipant()) {
+                        if (!this.actionError) this.actionError = this.$store.i18n.t('vote.submitError');
+                        return;
+                    }
+
+                    this.votes = {...this.votes, [optId]: value};
+                    version = (this.voteVersions[optId] || 0) + 1;
+                    this.voteVersions = {...this.voteVersions, [optId]: version};
+                    this.savingOptions = {...this.savingOptions, [optId]: true};
+
+                    const response = await fetch('/api/v1/polls/' + encodeURIComponent(this.pollId) + '/votes', {
+                        method: 'POST',
+                        headers: this.csrfHeaders(),
+                        credentials: 'same-origin',
+                        body: JSON.stringify({
+                            participantId: this.participantId,
+                            optionId: optId,
+                            availability: value,
+                        }),
+                    });
+                    if (!response.ok) {
+                        if (this.voteVersions[optId] === version) {
+                            this.votes = {...this.votes, [optId]: previous};
+                            this.actionError = this.$store.i18n.t('vote.submitError');
+                        }
+                        return;
+                    }
+
+                    this.rememberParticipant();
+                    await this.fetchVotes();
+                } catch (_) {
+                    if (version !== null && this.voteVersions[optId] === version) {
+                        this.votes = {...this.votes, [optId]: previous};
+                        this.actionError = this.$store.i18n.t('vote.submitError');
+                    }
+                } finally {
+                    if (version !== null && this.voteVersions[optId] === version) {
+                        const savingOptions = {...this.savingOptions};
+                        delete savingOptions[optId];
+                        this.savingOptions = savingOptions;
+                    }
+                }
+            },
+
+            get votingOpen() {
+                return this.poll.status === 'VOTING';
+            },
+            get canEdit() {
+                return (this.currentUser?.roles || []).includes('ADMIN');
+            },
+            get identityKnown() {
+                return Boolean(this.currentUser || this.participantId);
+            },
             get filledCount() {
                 return this.poll.options.filter(o => this.votes[o.id]).length;
             },
-            get total() {
-                return this.poll.options.length;
+            resultCount(optionId, availability) {
+                return this.tallies[optionId]?.[availability] || 0;
             },
-            get canSubmit() {
-                return this.total > 0 && this.filledCount === this.total && this.name.trim().length > 0;
+            optionVotes(optionId) {
+                const order = {yes: 0, maybe: 1, no: 2};
+                return this.collectedVotes
+                        .filter(vote => vote.optionId === optionId)
+                        .map(vote => {
+                            const participant = this.poll.participants.find(item => item.id === vote.participantId);
+                            return {
+                                participantId: vote.participantId,
+                                name: participant?.name || '',
+                                availability: (vote.availability || '').toLowerCase(),
+                            };
+                        })
+                        .filter(vote => vote.name)
+                        .sort((a, b) => order[a.availability] - order[b.availability]
+                                || a.name.localeCompare(b.name));
             },
-            get statusMessage() {
-                if (this.canSubmit) return this.$store.i18n.t('vote.statusReady');
-                if (this.filledCount < this.total) {
-                    const n = this.total - this.filledCount;
-                    return n + ' ' + this.$store.i18n.t('vote.toAnswer');
-                }
-                return this.$store.i18n.t('vote.addName');
+            get sortedResultOptions() {
+                return [...this.poll.options].sort((a, b) => {
+                    const scoreA = this.resultCount(a.id, 'yes') * 2 + this.resultCount(a.id, 'maybe');
+                    const scoreB = this.resultCount(b.id, 'yes') * 2 + this.resultCount(b.id, 'maybe');
+                    return scoreB - scoreA
+                            || this.resultCount(b.id, 'yes') - this.resultCount(a.id, 'yes')
+                            || this.resultCount(b.id, 'maybe') - this.resultCount(a.id, 'maybe')
+                            || this.resultCount(a.id, 'no') - this.resultCount(b.id, 'no');
+                });
             },
-            get yesCount() {
-                return Object.values(this.votes).filter(v => v === 'yes').length;
-            },
-            get maybeCount() {
-                return Object.values(this.votes).filter(v => v === 'maybe').length;
-            },
-            get noCount() {
-                return Object.values(this.votes).filter(v => v === 'no').length;
-            },
-
-            submitVotes() {
-                if (!this.canSubmit) return;
-                this.submitted = true;
+            voteGlyph(availability) {
+                return {yes: '✓', maybe: '?', no: '✕'}[availability] || '—';
             },
 
             formatDay(iso) {

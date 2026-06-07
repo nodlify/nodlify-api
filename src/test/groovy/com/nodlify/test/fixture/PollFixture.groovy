@@ -16,7 +16,6 @@ class PollFixture {
     public static boolean WHOLE_DAY = true
     public static boolean NOT_WHOLE_DAY = false
     public static Instant VOTING_DEADLINE = Instant.parse("2026-06-15T00:00:00Z")
-    public static boolean REQUIRE_PARTICIPANT_NAMES = true
     public static final DisplayName DISPLAY_NAME = DisplayName.of("John")
     public static final Instant CREATED_AT = Instant.now()
 
@@ -64,12 +63,12 @@ class PollFixture {
                 TITLE,
                 DESCRIPTION,
                 VOTING_DEADLINE,
-                REQUIRE_PARTICIPANT_NAMES,
                 PARTICIPANTS,
                 OPTIONS,
                 CREATED_AT,
                 ORGANIZER,
-                null
+                null,
+                "VOTING"
         )
     }
 
@@ -78,8 +77,7 @@ class PollFixture {
             {
                 "title": "$TITLE",
                 "description": "$DESCRIPTION",
-                "votingDeadline": "$VOTING_DEADLINE",
-                "requireParticipantNames": $REQUIRE_PARTICIPANT_NAMES
+                "votingDeadline": "$VOTING_DEADLINE"
             }
         """
     }

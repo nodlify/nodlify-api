@@ -185,16 +185,6 @@
                                    x-model="deadline"/>
                         </div>
 
-                        <div class="cp-toggle-row">
-                            <div class="cp-toggle-label">
-                                <span th:text="#{cp.requireNames}">Require participant names</span>
-                                <span class="desc" th:text="#{cp.requireNames.desc}">Anonymous votes are hidden if off.</span>
-                            </div>
-                            <button class="cp-switch" :class="{ on: requireNames }"
-                                    @click="requireNames = !requireNames"
-                                    type="button" th:attr="aria-label=#{cp.toggle}"></button>
-                        </div>
-
                         <!--/* will be added in the future -->
                         <div class="cp-toggle-row premium-locked">
                             <div class="cp-toggle-label">
@@ -229,7 +219,7 @@
                 <div class="cp-status">
                     <span class="summary" x-text="statusMessage"></span>
                     <span class="small"
-                          x-text="validCount + ' ' + $store.i18n.t('cp.optionsCount') + ' · ' + $store.i18n.t('cp.deadlineLabel') + ' ' + deadline"></span>
+                          x-text="validCount + ' ' + $store.i18n.t('cp.optionsCount') + (deadline ? ' · ' + $store.i18n.t('cp.deadlineLabel') + ' ' + deadline : '')"></span>
                 </div>
                 <button class="btn" type="button"
                         :disabled="!canCreate || creating"
@@ -314,8 +304,7 @@
             pickedLocationName: '',
             _map: null,
             _marker: null,
-            deadline: todayPlus(10),
-            requireNames: true,
+            deadline: '',
             submitted: false,
             creating: false,
             generatedId: '',
@@ -337,7 +326,6 @@
                     location: this.location,
                     locationQuery: this.locationQuery,
                     deadline: this.deadline,
-                    requireNames: this.requireNames,
                 });
             },
 
@@ -353,7 +341,6 @@
                     this.location = draft.location || null;
                     this.locationQuery = draft.locationQuery || '';
                     if (draft.deadline) this.deadline = draft.deadline;
-                    if (typeof draft.requireNames === 'boolean') this.requireNames = draft.requireNames;
                 } catch (_) {}
             },
 
@@ -403,7 +390,6 @@
                     title: this.title.trim(),
                     description: this.description.trim() || null,
                     votingDeadline: this.deadline ? this.deadline + 'T23:59:59Z' : null,
-                    requireParticipantNames: this.requireNames,
                     location: this.location ? {
                         latitude: this.location.latitude,
                         longitude: this.location.longitude,
