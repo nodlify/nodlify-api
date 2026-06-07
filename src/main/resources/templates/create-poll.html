@@ -10,15 +10,14 @@
       )}"
 >
 <head>
-    <title>Create a poll · Nodlify</title>
+    <title th:text="|#{cp.pageTitle} · Nodlify|">Create a poll · Nodlify</title>
 </head>
 <body>
 
 <header th:fragment="header" class="cp-nav">
     <div class="wrap cp-nav-inner">
-        <a href="/" class="cp-back"><span class="arrow inline-block rotate-180">→</span> Back to home</a>
+        <a href="/" class="cp-back"><span class="arrow inline-block rotate-180">→</span> <span th:text="#{nav.backToHome}">Back to home</span></a>
         <a href="/"><span class="logo">nodlify<span class="dot">.</span></span></a>
-        <span class="cp-step-meta">Draft · auto‑saved</span>
     </div>
 </header>
 
@@ -29,22 +28,22 @@
             <div class="cp-success">
                 <div class="check-big">✓</div>
                 <div>
-                    <span class="eyebrow mb-3 inline-flex">Poll created</span>
-                    <h2>Your link is ready to share.</h2>
+                    <span class="eyebrow mb-3 inline-flex" th:text="#{cp.success.eyebrow}">Poll created</span>
+                    <h2 th:text="#{cp.success.heading}">Your link is ready to share.</h2>
                 </div>
-                <p class="lede max-w-[44ch]">
+                <p class="lede max-w-[44ch]" th:text="#{cp.success.lede}">
                     Send it to participants — they'll vote yes / no / maybe with one tap.
                     You'll get an email when each person votes.
                 </p>
                 <div class="cp-link-card">
                     <span class="link-url" x-text="'https://nodlify.com/p/' + generatedId"></span>
-                    <button class="btn btn-sm" @click="copyLink()">Copy</button>
+                    <button class="btn btn-sm" @click="copyLink()" th:text="#{cp.success.copy}">Copy</button>
                 </div>
                 <div class="cp-success-actions">
-                    <a :href="'/vote/' + generatedId" class="btn">Open the poll <span class="arrow">→</span></a>
-                    <button class="btn btn-ghost" @click="submitted = false">Edit details</button>
+                    <a :href="'/vote/' + generatedId" class="btn"><span th:text="#{cp.success.openPoll}">Open the poll</span> <span class="arrow">→</span></a>
+                    <button class="btn btn-ghost" @click="submitted = false" th:text="#{cp.success.editDetails}">Edit details</button>
                 </div>
-                <p class="small mt-6">
+                <p class="small mt-6" th:text="#{cp.success.tip}">
                     Tip: anyone with the link can vote — no account needed.
                 </p>
             </div>
@@ -57,41 +56,41 @@
                 <div class="cp-form">
 
                     <div class="cp-header">
-                        <span class="eyebrow">New poll</span>
-                        <h1>What are we picking a time for?</h1>
-                        <p>Fill in a few details. You'll get a shareable link — no account needed for participants.</p>
+                        <span class="eyebrow" th:text="#{cp.eyebrow}">New poll</span>
+                        <h1 th:text="#{cp.heading}">What are we picking a time for?</h1>
+                        <p th:text="#{cp.subtitle}">Fill in a few details. You'll get a shareable link — no account needed for participants.</p>
                     </div>
 
                     <section class="cp-section">
                         <div class="cp-section-head">
                             <span class="cp-section-num">01</span>
-                            <h2 class="cp-section-title">Title</h2>
+                            <h2 class="cp-section-title" th:text="#{cp.title}">Title</h2>
                         </div>
-                        <p class="cp-section-hint">A short, friendly name participants will see at the top.</p>
-                        <input class="cp-input" placeholder="e.g. Team dinner — November"
+                        <p class="cp-section-hint" th:text="#{cp.title.hint}">A short, friendly name participants will see at the top.</p>
+                        <input class="cp-input" th:placeholder="#{cp.title.placeholder}"
                                x-model="title" maxlength="80"/>
                     </section>
 
                     <section class="cp-section">
                         <div class="cp-section-head">
                             <span class="cp-section-num">02</span>
-                            <h2 class="cp-section-title">Description</h2>
-                            <span class="cp-optional">Optional</span>
+                            <h2 class="cp-section-title" th:text="#{cp.description}">Description</h2>
+                            <span class="cp-optional" th:text="#{common.optional}">Optional</span>
                         </div>
-                        <p class="cp-section-hint">A note for participants — what it's about, what to bring, where to
+                        <p class="cp-section-hint" th:text="#{cp.description.hint}">A note for participants — what it's about, what to bring, where to
                             meet.</p>
                         <textarea class="cp-textarea"
-                                  placeholder="e.g. Quarterly planning offsite. Plan for two hours, food included."
+                                  th:placeholder="#{cp.description.placeholder}"
                                   x-model="description" maxlength="500"></textarea>
                     </section>
 
                     <section class="cp-section">
                         <div class="cp-section-head">
                             <span class="cp-section-num">03</span>
-                            <h2 class="cp-section-title">Propose dates</h2>
-                            <span class="cp-optional">Optional</span>
+                            <h2 class="cp-section-title" th:text="#{cp.dates}">Propose dates</h2>
+                            <span class="cp-optional" th:text="#{common.optional}">Optional</span>
                         </div>
-                        <p class="cp-section-hint">Add time options now, or leave this empty and add them later.</p>
+                        <p class="cp-section-hint" th:text="#{cp.dates.hint}">Add time options now, or leave this empty and add them later.</p>
 
                         <div class="cp-opt-list">
                             <template x-for="(opt, i) in options" :key="i">
@@ -111,9 +110,10 @@
                                                @change="options[i].end = $event.target.value"/>
                                     </template>
                                     <template x-if="opt.allDay">
-                                        <span class="allday-tag">All day</span>
+                                        <span class="allday-tag" x-text="$store.i18n.t('cp.allDay')">All day</span>
                                     </template>
-                                    <button class="cp-opt-remove" @click="removeOption(i)" aria-label="Remove">×
+                                    <button class="cp-opt-remove" @click="removeOption(i)"
+                                            th:attr="aria-label=#{common.remove}">×
                                     </button>
                                 </div>
                             </template>
@@ -121,10 +121,10 @@
 
                         <div class="mt-2 flex flex-wrap gap-2">
                             <button class="cp-opt-add" type="button" @click="addOption(false)">
-                                <span class="plus">+</span> Add time range
+                                <span class="plus">+</span> <span th:text="#{cp.addTimeRange}">Add time range</span>
                             </button>
                             <button class="cp-opt-add" type="button" @click="addOption(true)">
-                                <span class="plus">+</span> Add whole‑day option
+                                <span class="plus">+</span> <span th:text="#{cp.addWholeDay}">Add whole‑day option</span>
                             </button>
                         </div>
                     </section>
@@ -132,17 +132,17 @@
                     <section class="cp-section">
                         <div class="cp-section-head">
                             <span class="cp-section-num">04</span>
-                            <h2 class="cp-section-title">Location</h2>
+                            <h2 class="cp-section-title" th:text="#{cp.location}">Location</h2>
                             <button class="cp-switch ml-auto" :class="{ on: hasLocation }"
                                     @click="hasLocation = !hasLocation"
-                                    aria-label="Toggle location" type="button"></button>
+                                    th:attr="aria-label=#{cp.toggleLocation}" type="button"></button>
                         </div>
-                        <p class="cp-section-hint">Optional. Adds a place — and a map preview — to the invite.</p>
+                        <p class="cp-section-hint" th:text="#{cp.location.hint}">Optional. Adds a place — and a map preview — to the invite.</p>
                         <div x-show="hasLocation" x-cloak
                              class="cp-location-wrap"
                              @click.outside="showLocationDropdown = false">
                             <input class="cp-input"
-                                   placeholder="Search for a venue or address…"
+                                   th:placeholder="#{cp.location.search}"
                                    x-model="locationQuery"
                                    @input.debounce.500ms="searchLocation()"
                                    @focus="showLocationDropdown = true"
@@ -153,18 +153,18 @@
                                             @click="selectLocation(r)"
                                             x-text="r.address"></button>
                                 </template>
-                                <div x-show="locationSearching" class="cp-location-dropdown-status">Searching…</div>
+                                <div x-show="locationSearching" class="cp-location-dropdown-status" x-text="$store.i18n.t('cp.searching')">Searching…</div>
                                 <div x-show="!locationSearching && locationQuery.length > 1 && locationResults.length === 0"
-                                     class="cp-location-dropdown-status">No matches
+                                     class="cp-location-dropdown-status" x-text="$store.i18n.t('cp.noMatches')">No matches
                                 </div>
                                 <button type="button" class="cp-location-dropdown-item cp-location-dropdown-map"
                                         @click="openMapPicker()">
-                                    <span class="cp-location-dropdown-icon">📍</span> Pick on map
+                                    <span class="cp-location-dropdown-icon">📍</span> <span th:text="#{cp.pickOnMap}">Pick on map</span>
                                 </button>
                             </div>
                             <div x-show="location" class="cp-location-badge">
                                 <span x-text="location && location.address" class="cp-location-badge-text"></span>
-                                <button type="button" @click="clearLocation()" aria-label="Remove location">×</button>
+                                <button type="button" @click="clearLocation()" th:attr="aria-label=#{cp.removeLocation}">×</button>
                             </div>
                         </div>
                     </section>
@@ -172,14 +172,14 @@
                     <section class="cp-section">
                         <div class="cp-section-head">
                             <span class="cp-section-num">05</span>
-                            <h2 class="cp-section-title">Settings</h2>
+                            <h2 class="cp-section-title" th:text="#{cp.settings}">Settings</h2>
                         </div>
-                        <p class="cp-section-hint">Fine‑tune how voting works. You can change these later.</p>
+                        <p class="cp-section-hint" th:text="#{cp.settings.hint}">Fine‑tune how voting works. You can change these later.</p>
 
                         <div class="cp-toggle-row">
                             <div class="cp-toggle-label">
-                                <span>Voting deadline</span>
-                                <span class="desc">Poll becomes read‑only after this date.</span>
+                                <span th:text="#{cp.deadline}">Voting deadline</span>
+                                <span class="desc" th:text="#{cp.deadline.desc}">Poll becomes read‑only after this date.</span>
                             </div>
                             <input type="date" class="cp-input w-[180px] px-3 py-2 text-sm"
                                    x-model="deadline"/>
@@ -187,12 +187,12 @@
 
                         <div class="cp-toggle-row">
                             <div class="cp-toggle-label">
-                                <span>Require participant names</span>
-                                <span class="desc">Anonymous votes are hidden if off.</span>
+                                <span th:text="#{cp.requireNames}">Require participant names</span>
+                                <span class="desc" th:text="#{cp.requireNames.desc}">Anonymous votes are hidden if off.</span>
                             </div>
                             <button class="cp-switch" :class="{ on: requireNames }"
                                     @click="requireNames = !requireNames"
-                                    type="button" aria-label="Toggle"></button>
+                                    type="button" th:attr="aria-label=#{cp.toggle}"></button>
                         </div>
 
                         <!--/* will be added in the future -->
@@ -229,13 +229,13 @@
                 <div class="cp-status">
                     <span class="summary" x-text="statusMessage"></span>
                     <span class="small"
-                          x-text="validCount + ' option' + (validCount === 1 ? '' : 's') + ' · deadline ' + deadline"></span>
+                          x-text="validCount + ' ' + $store.i18n.t('cp.optionsCount') + ' · ' + $store.i18n.t('cp.deadlineLabel') + ' ' + deadline"></span>
                 </div>
                 <button class="btn" type="button"
                         :disabled="!canCreate || creating"
                         :class="{ 'cursor-not-allowed opacity-40': !canCreate || creating }"
                         @click="submit()">
-                    <span x-text="creating ? 'Creating…' : 'Create poll & add dates'"></span>
+                    <span x-text="creating ? $store.i18n.t('cp.creating') : $store.i18n.t('cp.submit')"></span>
                     <span class="arrow">→</span>
                 </button>
             </div>
@@ -249,14 +249,14 @@
          @click.self="mapPickerOpen = false">
         <div class="cp-map-modal">
             <div class="cp-map-modal-head">
-                <h3>Pick a location</h3>
+                <h3 th:text="#{cp.map.title}">Pick a location</h3>
                 <button class="cp-map-close" type="button"
-                        @click="mapPickerOpen = false" aria-label="Close">×
+                        @click="mapPickerOpen = false" th:attr="aria-label=#{common.close}">×
                 </button>
             </div>
             <div class="cp-map-search-wrap" @click.outside="mapSearchResults = []">
                 <input class="cp-input"
-                       placeholder="Search for a place…"
+                       th:placeholder="#{cp.map.search}"
                        x-model="mapSearchQuery"
                        @input.debounce.500ms="searchNominatim()"
                        autocomplete="off"/>
@@ -270,7 +270,7 @@
             </div>
             <div id="cp-map" class="cp-map-container"></div>
             <div class="cp-map-footer">
-                <div x-show="!pickedLocationName" class="cp-map-hint">
+                <div x-show="!pickedLocationName" class="cp-map-hint" x-text="$store.i18n.t('cp.map.hint')">
                     Click on the map or search to select a location
                 </div>
                 <div x-show="pickedLocationName" class="cp-map-picked">
@@ -280,7 +280,7 @@
                         :disabled="!pickedLocation"
                         :class="{ 'opacity-40': !pickedLocation }"
                         @click="confirmMapPick()">
-                    Use this location <span class="arrow">→</span>
+                    <span th:text="#{cp.map.use}">Use this location</span> <span class="arrow">→</span>
                 </button>
             </div>
         </div>
@@ -319,8 +319,46 @@
             submitted: false,
             creating: false,
             generatedId: '',
+            DRAFT_KEY: 'nodlify:create-poll-draft',
 
             init() {
+                this.restoreDraft();
+                this.$watch('draftSnapshot', value => {
+                    try { localStorage.setItem(this.DRAFT_KEY, value); } catch (_) {}
+                });
+            },
+
+            get draftSnapshot() {
+                return JSON.stringify({
+                    title: this.title,
+                    description: this.description,
+                    options: this.options,
+                    hasLocation: this.hasLocation,
+                    location: this.location,
+                    locationQuery: this.locationQuery,
+                    deadline: this.deadline,
+                    requireNames: this.requireNames,
+                });
+            },
+
+            restoreDraft() {
+                try {
+                    const raw = localStorage.getItem(this.DRAFT_KEY);
+                    if (!raw) return;
+                    const draft = JSON.parse(raw);
+                    this.title = draft.title || '';
+                    this.description = draft.description || '';
+                    this.options = Array.isArray(draft.options) ? draft.options : [];
+                    this.hasLocation = !!draft.hasLocation;
+                    this.location = draft.location || null;
+                    this.locationQuery = draft.locationQuery || '';
+                    if (draft.deadline) this.deadline = draft.deadline;
+                    if (typeof draft.requireNames === 'boolean') this.requireNames = draft.requireNames;
+                } catch (_) {}
+            },
+
+            clearDraft() {
+                try { localStorage.removeItem(this.DRAFT_KEY); } catch (_) {}
             },
 
             get validCount() {
@@ -330,9 +368,9 @@
                 return this.title.trim().length > 0;
             },
             get statusMessage() {
-                if (this.canCreate) return 'Ready to publish';
-                if (!this.title.trim()) return 'Add a title to continue';
-                return 'Almost there';
+                if (this.canCreate) return this.$store.i18n.t('cp.status.ready');
+                if (!this.title.trim()) return this.$store.i18n.t('cp.status.addTitle');
+                return this.$store.i18n.t('cp.status.almost');
             },
 
             addOption(allDay) {
@@ -397,6 +435,7 @@
                         return;
                     }
                     const data = await res.json();
+                    this.clearDraft();
                     // Created — send the owner to the manage view to add dates and share.
                     window.location.href = '/poll/' + data.id;
                 } catch (_) {

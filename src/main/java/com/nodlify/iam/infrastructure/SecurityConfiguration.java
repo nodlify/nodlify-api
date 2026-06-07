@@ -126,6 +126,9 @@ class SecurityConfiguration {
                                 // browser/agent probes (e.g. Chrome devtools)
                                 "/.well-known/**",
 
+                                // localized messages
+                                "/i18n/**",
+
                                 // public pages
                                 "/",
                                 "/login",

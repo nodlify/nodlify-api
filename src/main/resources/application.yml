@@ -2,6 +2,10 @@ spring:
   application:
     name: nodlify
 
+  messages:
+    fallback-to-system-locale: false
+    encoding: UTF-8
+
   docker:
     compose:
       lifecycle-management: start_and_stop

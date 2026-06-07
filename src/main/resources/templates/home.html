@@ -10,7 +10,7 @@
       )}"
 >
 <head>
-    <title>Home · Nodlify</title>
+    <title th:text="|#{home.title} · Nodlify|">Home · Nodlify</title>
 </head>
 <body>
 
@@ -42,12 +42,17 @@
        },
        get totalVoters() { return this.polls.reduce((s, p) => s + p.voted, 0); },
        get decisionsThisMonth() { return this.polls.filter(p => p.status === 'decided').length; },
+       get summary() {
+         return this.$store.i18n.t('home.summary')
+           .replace('{active}', this.counts.active)
+           .replace('{votes}', this.totalVoters);
+       },
        greeting() {
          const h = new Date().getHours();
-         if (h < 5)  return 'Still up';
-         if (h < 12) return 'Good morning';
-         if (h < 17) return 'Good afternoon';
-         return 'Good evening';
+         if (h < 5)  return this.$store.i18n.t('home.greeting.lateNight');
+         if (h < 12) return this.$store.i18n.t('home.greeting.morning');
+         if (h < 17) return this.$store.i18n.t('home.greeting.afternoon');
+         return this.$store.i18n.t('home.greeting.evening');
        },
        async loadUserInfo() {
          try {
@@ -97,66 +102,41 @@
                 <h1>
                     <span x-text="greeting()"></span><span x-show="displayName">, <i class="text-[var(--yes)]"
                                                                                      x-text="displayName"></i></span>.
-                    <span class="h1-sub">
-            You have <span x-text="counts.active"></span> active
-            <span x-text="counts.active === 1 ? 'poll' : 'polls'"></span> ·
-            <span x-text="totalVoters"></span> votes collected this week
-          </span>
+                    <span class="h1-sub" x-text="summary"></span>
                 </h1>
             </div>
-            <a href="/create-poll" class="btn">Create a new poll <span class="arrow">→</span></a>
+            <a href="/create-poll" class="btn"><span th:text="#{home.createPoll}">Create a new poll</span> <span class="arrow">→</span></a>
         </div>
 
-        <!--/* TODO: add stats
-        <div class="home-stats editorial">
-            <div class="stat-card">
-                <span class="stat-label">Active polls</span>
-                <span class="stat-value" x-text="counts.active"></span>
-                <span class="stat-trend up">+2 this week</span>
-            </div>
-            <div class="stat-card">
-                <span class="stat-label">Decisions made</span>
-                <span class="stat-value" x-text="decisionsThisMonth"></span>
-                <span class="stat-trend">this month</span>
-            </div>
-            <div class="stat-card">
-                <span class="stat-label">Total participants</span>
-                <span class="stat-value">42</span>
-                <span class="stat-trend up">+11 vs Oct</span>
-            </div>
-        </div>
-        */-->
         <div class="home-filters">
             <div class="filter-tabs">
-                <template
-                        x-for="tab in [{id:'all',label:'All'},{id:'active',label:'Voting'},{id:'decided',label:'Decided'},{id:'closed',label:'Closed'}]"
-                        :key="tab.id">
-                    <button class="filter-tab" :class="{ active: filter === tab.id }" @click="filter = tab.id">
-                        <span x-text="tab.label"></span><span class="count" x-text="counts[tab.id]"></span>
+                <template x-for="tabId in ['all','active','decided','closed']" :key="tabId">
+                    <button class="filter-tab" :class="{ active: filter === tabId }" @click="filter = tabId">
+                        <span x-text="$store.i18n.t('home.filter.' + tabId)"></span><span class="count" x-text="counts[tabId]"></span>
                     </button>
                 </template>
             </div>
             <select class="sort-select" x-model="sort">
-                <option value="recent">Sort: Most recent</option>
-                <option value="participants">Sort: Most participants</option>
-                <option value="closing">Sort: Closing soon</option>
-                <option value="alpha">Sort: A–Z</option>
+                <option value="recent" th:text="#{home.sort.recent}">Sort: Most recent</option>
+                <option value="participants" th:text="#{home.sort.participants}">Sort: Most participants</option>
+                <option value="closing" th:text="#{home.sort.closing}">Sort: Closing soon</option>
+                <option value="alpha" th:text="#{home.sort.alpha}">Sort: A–Z</option>
             </select>
         </div>
 
         <div class="poll-list">
             <div class="poll-list-header">
-                <span>Poll</span>
-                <span>Status</span>
-                <span>Participants</span>
+                <span th:text="#{home.col.poll}">Poll</span>
+                <span th:text="#{home.col.status}">Status</span>
+                <span th:text="#{home.col.participants}">Participants</span>
                 <span></span>
             </div>
 
             <template x-if="filtered.length === 0">
                 <div class="empty-state">
-                    <h3 class="empty-title">No polls here yet</h3>
-                    <p>Polls you create will show up in this view.</p>
-                    <a href="/create-poll" class="btn">Create your first poll <span class="arrow">→</span></a>
+                    <h3 class="empty-title" th:text="#{home.empty.title}">No polls here yet</h3>
+                    <p th:text="#{home.empty.text}">Polls you create will show up in this view.</p>
+                    <a href="/create-poll" class="btn"><span th:text="#{home.empty.cta}">Create your first poll</span> <span class="arrow">→</span></a>
                 </div>
             </template>
 
@@ -167,14 +147,14 @@
                         <span class="meta">
               <span x-text="'nodlify.com/p/' + poll.id"></span>
               <template x-if="poll.options > 0">
-                <span><span class="sep">·</span> <span x-text="poll.options + ' options'"></span></span>
+                <span><span class="sep">·</span> <span x-text="poll.options + ' ' + $store.i18n.t('home.options')"></span></span>
               </template>
             </span>
                     </div>
 
                     <span class="status-badge" :class="poll.status">
             <template x-if="poll.status === 'active'"><span class="pulse"></span></template>
-            <span x-text="{ active: 'Voting', decided: 'Decided', closed: 'Closed', draft: 'Draft' }[poll.status] || poll.status"></span>
+            <span x-text="$store.i18n.t('home.status.' + poll.status)"></span>
           </span>
 
                     <div class="participants-stack">
@@ -187,11 +167,11 @@
                     </div>
 
                     <div class="row-actions">
-                        <button class="row-action" aria-label="Duplicate poll" title="Duplicate"
-                                @click="duplicate(poll)">
+                        <button class="row-action" @click="duplicate(poll)"
+                                th:attr="aria-label=#{home.duplicate},title=#{home.duplicate}">
                             <img th:src="@{/icons/duplicate.svg}" width="18" height="18" alt="" aria-hidden="true">
                         </button>
-                        <button class="row-action" aria-label="More" title="More">⋯</button>
+                        <button class="row-action" th:attr="aria-label=#{home.more},title=#{home.more}">⋯</button>
                     </div>
                 </div>
             </template>

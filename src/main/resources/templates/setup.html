@@ -10,7 +10,7 @@
       )}"
 >
 <head>
-    <title>Setup · Nodlify</title>
+    <title th:text="|#{setup.eyebrow} · Nodlify|">Setup · Nodlify</title>
 </head>
 <body>
 <div th:fragment="main"
@@ -24,9 +24,9 @@
 
         <div class="auth-form-wrap">
             <div class="auth-head">
-                <span class="eyebrow">Initial setup</span>
-                <h1>Configure your app.</h1>
-                <p>This only runs once. After completion, setup endpoints are locked.</p>
+                <span class="eyebrow" th:text="#{setup.eyebrow}">Initial setup</span>
+                <h1 th:text="#{setup.heading}">Configure your app.</h1>
+                <p th:text="#{setup.subtitle}">This only runs once. After completion, setup endpoints are locked.</p>
             </div>
 
             <div class="setup-steps">
@@ -52,20 +52,20 @@
                  x-transition:enter="transition ease-out duration-200"
                  x-transition:enter-start="opacity-0 translate-x-4"
                  x-transition:enter-end="opacity-100 translate-x-0">
-                <p class="setup-step-label">Step 1 — Domain</p>
+                <p class="setup-step-label" th:text="#{setup.step1}">Step 1 — Domain</p>
 
                 <form @submit.prevent="setupDomain()" novalidate class="auth-form">
                     <div class="field">
-                        <label for="domain">Application domain</label>
+                        <label for="domain" th:text="#{setup.domain}">Application domain</label>
                         <input type="text" id="domain" x-model="domain" required autocomplete="off"
-                               placeholder="e.g. nodlify.io or localhost:8080"/>
-                        <span class="hint">The public URL where this app will be accessible.</span>
+                               th:placeholder="#{setup.domainPlaceholder}"/>
+                        <span class="hint" th:text="#{setup.domainHint}">The public URL where this app will be accessible.</span>
                     </div>
 
                     <button type="submit" class="btn auth-submit" :disabled="loading || !domain.trim()">
                         <img x-show="loading" x-cloak th:src="@{/icons/spinner.svg}" class="setup-spinner" alt=""
                              aria-hidden="true">
-                        <span x-text="loading ? 'Saving…' : 'Continue'">Continue</span>
+                        <span x-text="loading ? $store.i18n.t('setup.saving') : $store.i18n.t('common.continue')">Continue</span>
                         <span class="arrow" x-show="!loading">→</span>
                     </button>
                 </form>
@@ -75,22 +75,22 @@
                  x-transition:enter="transition ease-out duration-200"
                  x-transition:enter-start="opacity-0 translate-x-4"
                  x-transition:enter-end="opacity-100 translate-x-0">
-                <p class="setup-step-label">Step 2 — Admin account</p>
+                <p class="setup-step-label" th:text="#{setup.step2}">Step 2 — Admin account</p>
 
                 <form @submit.prevent="setupAdmin()" novalidate class="auth-form">
                     <div class="field">
-                        <label for="email">Email address</label>
+                        <label for="email" th:text="#{setup.email}">Email address</label>
                         <input type="email" id="email" x-model="email" required autocomplete="email" autofocus
                                placeholder="admin@yourdomain.com"/>
                     </div>
 
                     <div class="field">
-                        <label for="password">Password</label>
+                        <label for="password" th:text="#{setup.password}">Password</label>
                         <div class="password-wrap">
                             <input :type="showPassword ? 'text' : 'password'" id="password" x-model="password"
                                    required autocomplete="new-password" placeholder="••••••••"/>
                             <button type="button" class="toggle-pw" @click="showPassword = !showPassword"
-                                    x-text="showPassword ? 'Hide' : 'Show'"></button>
+                                    x-text="showPassword ? $store.i18n.t('common.hide') : $store.i18n.t('common.show')"></button>
                         </div>
                     </div>
 
@@ -98,7 +98,7 @@
                             :disabled="loading || !email.trim() || !password.trim()">
                         <img x-show="loading" x-cloak th:src="@{/icons/spinner.svg}" class="setup-spinner" alt=""
                              aria-hidden="true">
-                        <span x-text="loading ? 'Creating…' : 'Continue'">Continue</span>
+                        <span x-text="loading ? $store.i18n.t('setup.creating') : $store.i18n.t('common.continue')">Continue</span>
                         <span class="arrow" x-show="!loading">→</span>
                     </button>
                 </form>
@@ -108,15 +108,15 @@
                  x-transition:enter="transition ease-out duration-200"
                  x-transition:enter-start="opacity-0 translate-x-4"
                  x-transition:enter-end="opacity-100 translate-x-0">
-                <p class="setup-step-label">Step 3 — Confirm</p>
+                <p class="setup-step-label" th:text="#{setup.step3}">Step 3 — Confirm</p>
 
                 <div class="setup-summary">
                     <div class="setup-summary-row">
-                        <span class="setup-summary-label">Domain</span>
+                        <span class="setup-summary-label" th:text="#{setup.summaryDomain}">Domain</span>
                         <span class="setup-summary-value" x-text="domain"></span>
                     </div>
                     <div class="setup-summary-row">
-                        <span class="setup-summary-label">Administrator</span>
+                        <span class="setup-summary-label" th:text="#{setup.summaryAdmin}">Administrator</span>
                         <span class="setup-summary-value" x-text="email"></span>
                     </div>
                 </div>
@@ -124,18 +124,18 @@
                 <button @click="completeSetup()" class="btn auth-submit" :disabled="loading">
                     <img x-show="loading" x-cloak th:src="@{/icons/spinner.svg}" class="setup-spinner" alt=""
                          aria-hidden="true">
-                    <span x-text="loading ? 'Finalising…' : 'Complete setup'">Complete setup</span>
+                    <span x-text="loading ? $store.i18n.t('setup.finalising') : $store.i18n.t('setup.complete')">Complete setup</span>
                     <span class="arrow" x-show="!loading">→</span>
                 </button>
             </div>
         </div>
 
         <div class="auth-bottom">
-            <span>© 2026 Nodlify</span>
+            <span th:text="#{footer.copyrightShort}">© 2026 Nodlify</span>
             <span class="links">
-        <a href="#">Privacy</a>
-        <a href="#">Terms</a>
-        <a href="#">Status</a>
+        <a href="#" th:text="#{common.privacy}">Privacy</a>
+        <a href="#" th:text="#{common.terms}">Terms</a>
+        <a href="#" th:text="#{common.status}">Status</a>
       </span>
         </div>
     </div>
@@ -161,7 +161,7 @@
                         headers: {'Content-Type': 'application/json'},
                         body: JSON.stringify({domain: this.domain.trim()})
                     });
-                    if (!res.ok) throw new Error(await res.text().catch(() => null) || 'Domain setup failed. Check the address and try again.');
+                    if (!res.ok) throw new Error(await res.text().catch(() => null) || this.$store.i18n.t('setup.errorDomain'));
                     this.step = 2;
                 } catch (e) {
                     this.error = e.message;
@@ -179,7 +179,7 @@
                         headers: {'Content-Type': 'application/json'},
                         body: JSON.stringify({email: this.email.trim(), password: this.password})
                     });
-                    if (!res.ok) throw new Error(await res.text().catch(() => null) || 'Admin creation failed. Check the details and try again.');
+                    if (!res.ok) throw new Error(await res.text().catch(() => null) || this.$store.i18n.t('setup.errorAdmin'));
                     this.step = 3;
                 } catch (e) {
                     this.error = e.message;
@@ -193,7 +193,7 @@
                 this.error = null;
                 try {
                     const res = await fetch('/api/v1/setup', {method: 'POST'});
-                    if (!res.ok) throw new Error(await res.text().catch(() => null) || 'Setup finalisation failed.');
+                    if (!res.ok) throw new Error(await res.text().catch(() => null) || this.$store.i18n.t('setup.errorComplete'));
                     window.location.href = '/login';
                 } catch (e) {
                     this.error = e.message;

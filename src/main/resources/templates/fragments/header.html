@@ -42,7 +42,7 @@
                :class="{ active: window.location.pathname.startsWith('/home') }">My polls</a>
         </nav>
         <div class="home-nav-right">
-            <input class="search-input" type="search" placeholder="Search polls?"/>
+            <input class="search-input" type="search" th:placeholder="#{nav.search}" placeholder="Search polls?"/>
 
             <div class="avatar-menu-wrap" @click.outside="menuOpen = false">
                 <button class="avatar-button"

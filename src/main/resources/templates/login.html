@@ -10,7 +10,7 @@
       )}"
 >
 <head>
-    <title>Sign in · Nodlify</title>
+    <title th:text="|#{login.eyebrow} · Nodlify|">Sign in · Nodlify</title>
 </head>
 <body>
 <div th:fragment="main"
@@ -20,21 +20,21 @@
     <div class="auth-form-side">
         <div class="auth-top">
             <a href="/"><span class="logo">nodlify<span class="dot">.</span></span></a>
-            <span class="small">No account? <a href="/register">Create one</a></span>
+            <span class="small"><span th:text="#{login.noAccount}">No account?</span> <a href="/register" th:text="#{login.createOne}">Create one</a></span>
         </div>
 
         <div class="auth-form-wrap">
             <div class="auth-head">
-                <span class="eyebrow">Sign in</span>
-                <h1>Welcome back.</h1>
-                <p>Sign in to manage your polls and see who's voted.</p>
+                <span class="eyebrow" th:text="#{login.eyebrow}">Sign in</span>
+                <h1 th:text="#{login.heading}">Welcome back.</h1>
+                <p th:text="#{login.subtitle}">Sign in to manage your polls and see who's voted.</p>
             </div>
 
             <th:block th:if="${param.error}">
-                <div class="field-error mb-4">Invalid email or password.</div>
+                <div class="field-error mb-4" th:text="#{login.error}">Invalid email or password.</div>
             </th:block>
             <th:block th:if="${param.logout}">
-                <div class="mb-4 text-[13px] text-[var(--yes)]">You have been signed out.</div>
+                <div class="mb-4 text-[13px] text-[var(--yes)]" th:text="#{login.loggedOut}">You have been signed out.</div>
             </th:block>
 
             <form class="auth-form"
@@ -43,7 +43,7 @@
                 <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
 
                 <div class="field">
-                    <label for="email">Email</label>
+                    <label for="email" th:text="#{login.email}">Email</label>
                     <input id="email" type="email" name="email"
                            placeholder="you@company.com"
                            x-model="email"
@@ -53,8 +53,8 @@
 
                 <div class="field">
                     <label for="password">
-                        Password
-                        <a href="/reset-password">Forgot?</a>
+                        <span th:text="#{login.password}">Password</span>
+                        <a href="/reset-password" th:text="#{login.forgot}">Forgot?</a>
                     </label>
                     <div class="password-wrap">
                         <input id="password" :type="showPw ? 'text' : 'password'" name="password"
@@ -62,19 +62,19 @@
                                x-model="pw"
                                autocomplete="current-password"/>
                         <button type="button" class="toggle-pw" @click="showPw = !showPw"
-                                x-text="showPw ? 'Hide' : 'Show'"></button>
+                                x-text="showPw ? $store.i18n.t('common.hide') : $store.i18n.t('common.show')"></button>
                     </div>
                 </div>
 
                 <label class="checkbox-row">
-                    <input type="checkbox" name="remember-me" checked/> Keep me signed in for 30 days
+                    <input type="checkbox" name="remember-me" checked/> <span th:text="#{login.remember}">Keep me signed in for 30 days</span>
                 </label>
 
                 <button type="submit" class="btn auth-submit">
-                    Sign in <span class="arrow">→</span>
+                    <span th:text="#{login.submit}">Sign in</span> <span class="arrow">→</span>
                 </button>
 
-                <div class="auth-divider">or continue with</div>
+                <div class="auth-divider" th:text="#{common.continueWith}">or continue with</div>
                 <div class="grid grid-cols-2 gap-2.5">
                     <a href="/oauth2/authorization/google" class="oauth-btn">
                         <img th:src="@{/icons/google.svg}" width="16" height="16" alt="" aria-hidden="true">
@@ -88,16 +88,16 @@
             </form>
 
             <p class="auth-foot">
-                Trouble signing in? <a href="#">Contact support</a>
+                <span th:text="#{login.trouble}">Trouble signing in?</span> <a href="#" th:text="#{login.contactSupport}">Contact support</a>
             </p>
         </div>
 
         <div class="auth-bottom">
-            <span>© 2026 Nodlify</span>
+            <span th:text="#{footer.copyrightShort}">© 2026 Nodlify</span>
             <span class="links">
-        <a href="#">Privacy</a>
-        <a href="#">Terms</a>
-        <a href="#">Status</a>
+        <a href="#" th:text="#{common.privacy}">Privacy</a>
+        <a href="#" th:text="#{common.terms}">Terms</a>
+        <a href="#" th:text="#{common.status}">Status</a>
       </span>
         </div>
     </div>

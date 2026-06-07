@@ -10,7 +10,7 @@
       )}"
 >
 <head>
-    <title>Create account · Nodlify</title>
+    <title th:text="|#{register.eyebrow} · Nodlify|">Create account · Nodlify</title>
 </head>
 <body>
 <div th:fragment="main"
@@ -27,21 +27,21 @@
          if (this.pw.length < 10) return 2;
          return 3;
        },
-       get strengthLabel() { return ['','weak','okay','strong'][this.strength]; },
+       get strengthLabel() { return ['', $store.i18n.t('register.strength.weak'), $store.i18n.t('register.strength.okay'), $store.i18n.t('register.strength.strong')][this.strength]; },
        get canSubmit() { return this.agree && this.name.trim().length >= 2 && this.pw.length >= 8 && this.email.length > 0; }
      }">
 
     <div class="auth-form-side">
         <div class="auth-top">
             <a href="/"><span class="logo">nodlify<span class="dot">.</span></span></a>
-            <span class="small">Already have an account? <a href="/login">Sign in</a></span>
+            <span class="small"><span th:text="#{register.haveAccount}">Already have an account?</span> <a href="/login" th:text="#{register.signIn}">Sign in</a></span>
         </div>
 
         <div class="auth-form-wrap">
             <div class="auth-head">
-                <span class="eyebrow">Create account</span>
-                <h1>Start in 30 seconds.</h1>
-                <p>Free forever for groups up to 30. No credit card needed.</p>
+                <span class="eyebrow" th:text="#{register.eyebrow}">Create account</span>
+                <h1 th:text="#{register.heading}">Start in 30 seconds.</h1>
+                <p th:text="#{register.subtitle}">Free forever for groups up to 30. No credit card needed.</p>
             </div>
 
             <form class="auth-form"
@@ -51,7 +51,7 @@
                 <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
 
                 <div class="field">
-                    <label for="name">Your name</label>
+                    <label for="name" th:text="#{register.name}">Your name</label>
                     <input id="name" type="text" name="displayName"
                            placeholder="Sofia Reyes"
                            x-model="name"
@@ -63,17 +63,17 @@
                 </div>
 
                 <div class="field">
-                    <label for="email">Work email</label>
+                    <label for="email" th:text="#{register.email}">Work email</label>
                     <input id="email" type="email" name="email"
                            placeholder="you@company.com"
                            x-model="email"
                            autocomplete="email"/>
-                    <span class="hint">We'll send a verification link.</span>
+                    <span class="hint" th:text="#{register.emailHint}">We'll send a verification link.</span>
                 </div>
 
                 <div class="field">
                     <label for="password">
-                        Password
+                        <span th:text="#{register.password}">Password</span>
                         <span x-show="pw.length > 0"
                               class="font-mono text-[11px] uppercase tracking-[0.04em]"
                               :class="{ 'text-[var(--no)]': strength === 1, 'text-[var(--maybe)]': strength === 2, 'text-[var(--yes)]': strength === 3 }"
@@ -81,11 +81,11 @@
                     </label>
                     <div class="password-wrap">
                         <input id="password" :type="showPw ? 'text' : 'password'" name="password"
-                               placeholder="At least 8 characters"
+                               th:placeholder="#{register.passwordPlaceholder}"
                                x-model="pw"
                                autocomplete="new-password"/>
                         <button type="button" class="toggle-pw" @click="showPw = !showPw"
-                                x-text="showPw ? 'Hide' : 'Show'"></button>
+                                x-text="showPw ? $store.i18n.t('common.hide') : $store.i18n.t('common.show')"></button>
                     </div>
                     <div class="mt-1 flex gap-[3px]">
                         <template x-for="i in [1,2,3]" :key="i">
@@ -97,20 +97,20 @@
 
                 <label class="checkbox-row">
                     <input type="checkbox" x-model="agree" name="agree"/>
-                    <span>I agree to the
-                        <a href="#" class="border-b-[0.5px] border-[var(--line)] text-[var(--ink)]">terms</a>
-                        and
-                        <a href="#" class="border-b-[0.5px] border-[var(--line)] text-[var(--ink)]">privacy policy</a>
+                    <span><span th:text="#{register.agreePre}">I agree to the</span>
+                        <a href="#" class="border-b-[0.5px] border-[var(--line)] text-[var(--ink)]" th:text="#{register.terms}">terms</a>
+                        <span th:text="#{register.and}">and</span>
+                        <a href="#" class="border-b-[0.5px] border-[var(--line)] text-[var(--ink)]" th:text="#{register.privacyPolicy}">privacy policy</a>
                     </span>
                 </label>
 
                 <button type="submit" class="btn auth-submit"
                         :disabled="!canSubmit"
                         :class="{ 'cursor-not-allowed opacity-40': !canSubmit }">
-                    Create account <span class="arrow">→</span>
+                    <span th:text="#{register.submit}">Create account</span> <span class="arrow">→</span>
                 </button>
 
-                <div class="auth-divider">or continue with</div>
+                <div class="auth-divider" th:text="#{common.continueWith}">or continue with</div>
                 <div class="grid grid-cols-2 gap-2.5">
                     <a href="/oauth2/authorization/google" class="oauth-btn">
                         <img th:src="@{/icons/google.svg}" width="16" height="16" alt="" aria-hidden="true">
@@ -124,15 +124,15 @@
                 </div>
             </form>
 
-            <p class="auth-foot">By creating an account you accept our terms.</p>
+            <p class="auth-foot" th:text="#{register.foot}">By creating an account you accept our terms.</p>
         </div>
 
         <div class="auth-bottom">
-            <span>© 2026 Nodlify</span>
+            <span th:text="#{footer.copyrightShort}">© 2026 Nodlify</span>
             <span class="links">
-        <a href="#">Privacy</a>
-        <a href="#">Terms</a>
-        <a href="#">Status</a>
+        <a href="#" th:text="#{common.privacy}">Privacy</a>
+        <a href="#" th:text="#{common.terms}">Terms</a>
+        <a href="#" th:text="#{common.status}">Status</a>
       </span>
         </div>
     </div>
