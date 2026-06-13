@@ -2,8 +2,6 @@ package com.nodlify.poll.domain;
 
 import com.nodlify.shared.domain.Identifier;
 import jakarta.persistence.*;
-import lombok.AccessLevel;
-import lombok.NoArgsConstructor;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
@@ -14,11 +12,10 @@ import java.time.Instant;
 @Entity
 @Table(name = "geo_locations")
 @EntityListeners(AuditingEntityListener.class)
-@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class GeoLocation {
 
     @EmbeddedId
-    private final Identifier id = Identifier.generate();
+    private final Identifier id;
 
     @Embedded
     private LocationDetails locationDetails;
@@ -29,7 +26,12 @@ public class GeoLocation {
     @LastModifiedDate
     private Instant updatedAt;
 
+    protected GeoLocation() {
+        this.id = Identifier.generate();
+    }
+
     private GeoLocation(LocationDetails locationDetails) {
+        this();
         this.locationDetails = locationDetails;
     }
 

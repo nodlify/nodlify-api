@@ -46,16 +46,16 @@
        },
        get totalParticipants() { return this.polls.reduce((sum, poll) => sum + poll.participants, 0); },
        get summary() {
-         return this.$store.i18n.t('home.summary')
+         return this.$store.i18n.message('home.summary')
            .replace('{active}', this.counts.active)
            .replace('{participants}', this.totalParticipants);
        },
        greeting() {
          const h = new Date().getHours();
-         if (h < 5)  return this.$store.i18n.t('home.greeting.lateNight');
-         if (h < 12) return this.$store.i18n.t('home.greeting.morning');
-         if (h < 17) return this.$store.i18n.t('home.greeting.afternoon');
-         return this.$store.i18n.t('home.greeting.evening');
+         if (h < 5)  return this.$store.i18n.message('home.greeting.lateNight');
+         if (h < 12) return this.$store.i18n.message('home.greeting.morning');
+         if (h < 17) return this.$store.i18n.message('home.greeting.afternoon');
+         return this.$store.i18n.message('home.greeting.evening');
        },
        async loadUserInfo() {
          try {
@@ -139,7 +139,7 @@
          } catch (_) {}
        },
        async removePoll(poll) {
-         const message = this.$store.i18n.t('home.delete.confirm').replace('{title}', poll.title);
+         const message = this.$store.i18n.message('home.delete.confirm').replace('{title}', poll.title);
          if (!window.confirm(message)) return;
 
          this.deletingId = poll.id;
@@ -152,7 +152,7 @@
            if (!res.ok) throw new Error('delete failed');
            this.polls = this.polls.filter(item => item.id !== poll.id);
          } catch (_) {
-           window.alert(this.$store.i18n.t('home.delete.error'));
+           window.alert(this.$store.i18n.message('home.delete.error'));
          } finally {
            this.deletingId = null;
          }
@@ -176,7 +176,7 @@
             <div class="filter-tabs">
                 <template x-for="tabId in ['all','active','decided','closed']" :key="tabId">
                     <button class="filter-tab" :class="{ active: filter === tabId }" @click="filter = tabId">
-                        <span x-text="$store.i18n.t('home.filter.' + tabId)"></span><span class="count" x-text="counts[tabId]"></span>
+                        <span x-text="$store.i18n.message('home.filter.' + tabId)"></span><span class="count" x-text="counts[tabId]"></span>
                     </button>
                 </template>
             </div>
@@ -211,14 +211,14 @@
                         <span class="meta">
               <span x-text="pollUrl(poll.id)"></span>
               <template x-if="poll.options > 0">
-                <span><span class="sep">·</span> <span x-text="poll.options + ' ' + $store.i18n.t('home.options')"></span></span>
+                <span><span class="sep">·</span> <span x-text="poll.options + ' ' + $store.i18n.message('home.options')"></span></span>
               </template>
             </span>
                     </div>
 
                     <span class="status-badge" :class="poll.status">
             <template x-if="poll.status === 'active'"><span class="pulse"></span></template>
-            <span x-text="$store.i18n.t('home.status.' + poll.status)"></span>
+            <span x-text="$store.i18n.message('home.status.' + poll.status)"></span>
           </span>
 
                     <div class="participants-stack">

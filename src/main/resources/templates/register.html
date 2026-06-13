@@ -27,7 +27,7 @@
          if (this.pw.length < 10) return 2;
          return 3;
        },
-       get strengthLabel() { return ['', $store.i18n.t('register.strength.weak'), $store.i18n.t('register.strength.okay'), $store.i18n.t('register.strength.strong')][this.strength]; },
+       get strengthLabel() { return ['', $store.i18n.message('register.strength.weak'), $store.i18n.message('register.strength.okay'), $store.i18n.message('register.strength.strong')][this.strength]; },
        get canSubmit() { return this.agree && this.name.trim().length >= 2 && this.pw.length >= 8 && this.email.length > 0; }
      }">
 
@@ -85,11 +85,11 @@
                                x-model="pw"
                                autocomplete="new-password"/>
                         <button type="button" class="toggle-pw" @click="showPw = !showPw"
-                                x-text="showPw ? $store.i18n.t('common.hide') : $store.i18n.t('common.show')"></button>
+                                x-text="showPw ? $store.i18n.message('common.hide') : $store.i18n.message('common.show')"></button>
                     </div>
                     <div class="mt-1 flex gap-[3px]">
                         <template x-for="i in [1,2,3]" :key="i">
-                        <span class="h-[3px] flex-1 rounded-sm transition-colors"
+                        <span class="h-[3px] flex-1 rounded-xs transition-colors"
                                 :class="strength >= i ? { 1: 'bg-[var(--no)]', 2: 'bg-[var(--maybe)]', 3: 'bg-[var(--yes)]' }[strength] : 'bg-[var(--line-2)]'"></span>
                         </template>
                     </div>

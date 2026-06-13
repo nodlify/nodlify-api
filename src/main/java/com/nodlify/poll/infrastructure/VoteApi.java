@@ -7,9 +7,11 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 import static org.springframework.http.HttpStatus.CREATED;
 
@@ -21,6 +23,7 @@ import static org.springframework.http.HttpStatus.CREATED;
 class VoteApi {
 
     private final VoteUseCase voteUseCase;
+    private final PollEventPublisher eventPublisher;
 
     @GetMapping
     @Operation(summary = "List votes", description = "Lists all votes for a given poll")
@@ -33,9 +36,14 @@ class VoteApi {
     @Operation(summary = "Cast a vote", description = "Casts a vote for a given poll option")
     ResponseEntity<Void> castVote(
             @PathVariable String pollId,
-            @RequestBody CastVoteRequest request
+            @RequestBody CastVoteRequest request,
+            Authentication authentication
     ) {
         voteUseCase.castVote(request.toCommand(pollId));
+        eventPublisher.publish("vote_cast", authentication, Map.of(
+                "pollId", pollId,
+                "participantId", request.getParticipantId(),
+                "optionId", request.getOptionId()));
         return ResponseEntity.status(CREATED).build();
     }
 
@@ -44,9 +52,14 @@ class VoteApi {
     ResponseEntity<Void> removeVote(
             @PathVariable String pollId,
             @RequestParam String participantId,
-            @RequestParam String optionId
+            @RequestParam String optionId,
+            Authentication authentication
     ) {
         voteUseCase.removeVote(Identifier.of(pollId), Identifier.of(participantId), Identifier.of(optionId));
+        eventPublisher.publish("vote_removed", authentication, Map.of(
+                "pollId", pollId,
+                "participantId", participantId,
+                "optionId", optionId));
         return ResponseEntity.noContent().build();
     }
 }

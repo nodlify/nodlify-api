@@ -23,7 +23,7 @@ public class Participant {
 
     @With
     @EmbeddedId
-    private Identifier id = Identifier.generate();
+    private Identifier id;
 
     @Column(name = "displayName")
     private DisplayName displayName;
@@ -40,11 +40,5 @@ public class Participant {
     public Participant(DisplayName displayName) {
         this.id = Identifier.generate();
         this.displayName = displayName;
-    }
-
-    public Participant(DisplayName displayName, Email email, Phone phone) {
-        this.displayName = displayName;
-        this.email = email;
-        this.phone = phone;
     }
 }

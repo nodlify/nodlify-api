@@ -6,7 +6,6 @@ import com.nodlify.shared.exception.IllegalValueException;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
 import lombok.With;
 import org.springframework.data.annotation.CreatedBy;
 import org.springframework.data.annotation.CreatedDate;
@@ -17,34 +16,38 @@ import java.time.Instant;
 import java.util.*;
 
 import static jakarta.persistence.CascadeType.ALL;
-import static lombok.AccessLevel.PROTECTED;
 
 
 @Getter
 @Entity
 @Table(name = "polls")
-@NoArgsConstructor(access = PROTECTED)
 @AllArgsConstructor
 @EntityListeners(AuditingEntityListener.class)
 public class Poll {
 
     @With
     @EmbeddedId
-    private Identifier id = Identifier.generate();
+    private Identifier id;
 
+    @With
     private Title title;
 
+    @With
     private Description description;
 
+    @With
     private Instant votingDeadline;
 
+    @With
     @Column(name = "allow_anonymous")
     private boolean allowAnonymous = false;
 
+    @With
     @Enumerated(EnumType.STRING)
     @Column(name = "type")
     private PollType type = PollType.TIME;
 
+    @With
     @Enumerated(EnumType.STRING)
     @Column(name = "choice_type")
     private ChoiceType choiceType = ChoiceType.MULTIPLE;
@@ -82,50 +85,13 @@ public class Poll {
     @LastModifiedDate
     private Instant updatedAt;
 
-    public static Poll from(Title title, Description description) {
-        var poll = new Poll();
-        poll.title = title;
-        poll.description = description;
-        return poll;
-    }
-
-    public static Poll from(Title title, Description description, Instant votingDeadline) {
-        var poll = from(title, description);
-        poll.votingDeadline = votingDeadline;
-        return poll;
-    }
-
-    public static Poll from(Title title, Description description, Instant votingDeadline, boolean allowAnonymous) {
-        var poll = from(title, description, votingDeadline);
-        poll.allowAnonymous = allowAnonymous;
-        return poll;
-    }
-
-    public static Poll from(
-            Title title,
-            Description description,
-            Instant votingDeadline,
-            boolean allowAnonymous,
-            PollType type,
-            ChoiceType choiceType
-    ) {
-        var poll = from(title, description, votingDeadline, allowAnonymous);
-        poll.type = type == null ? PollType.TIME : type;
-        poll.choiceType = choiceType == null ? ChoiceType.MULTIPLE : choiceType;
-        return poll;
+    public Poll() {
+        this.id = Identifier.generate();
     }
 
     public void updateDetails(Title title, Description description) {
         this.title = title;
         this.description = description;
-    }
-
-    public void addOption(TimeRange timeRange, boolean wholeDay) {
-        addOption(TimeOption.of(timeRange, wholeDay));
-    }
-
-    public void addOption(TimeRange timeRange) {
-        addOption(TimeOption.of(timeRange));
     }
 
     public void addOption(Option option) {

@@ -1,0 +1,17 @@
+spring:
+  jpa:
+    generate-ddl: false
+    hibernate:
+      ddl-auto: none
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+    properties:
+      hibernate:
+        jdbc:
+          time_zone: UTC
+  datasource:
+    url: ${NODLIFY_DATABASE_URL:jdbc:postgresql://localhost:5432/nodlify}
+    username: ${NODLIFY_DATABASE_USER:root}
+    password: ${NODLIFY_DATABASE_PASS:pass}
+    name: nodlify
+    hikari:
+      maximum-pool-size: 20

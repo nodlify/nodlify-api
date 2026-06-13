@@ -24,12 +24,12 @@ tasks.register('buildTailwind', Exec) {
     dependsOn 'downloadTailwindCli'
     def input = file('src/main/resources/tailwind/input.css')
     def output = layout.buildDirectory.file('generated/tailwind/static/css/app.css')
-    inputs.files('tailwind.config.js', input)
+    inputs.files(input)
     inputs.files(fileTree('src/main/resources/static/css') { include '**/*.css' })
     inputs.files(fileTree('src/main/resources/templates') { include '**/*.html' })
     outputs.file(output)
     executable twCli.get().asFile.absolutePath
-    args '-c', 'tailwind.config.js', '-i', input.absolutePath,
+    args '-i', input.absolutePath,
             '-o', output.get().asFile.absolutePath, '--minify'
 }
 
@@ -37,6 +37,6 @@ abstract class TailwindExtension {
     abstract Property<String> getVersion()
 
     TailwindExtension(ObjectFactory objects) {
-        version.convention('3.4.17')
+        version.convention('4.3.1')
     }
 }

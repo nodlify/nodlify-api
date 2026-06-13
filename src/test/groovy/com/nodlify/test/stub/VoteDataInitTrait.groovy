@@ -14,7 +14,9 @@ trait VoteDataInitTrait {
     def title = Title.of('Team Sync Poll')
     def desc = Description.of('Please select your preferred time for the weekly team sync.')
 
-    Poll poll = Poll.from(title, desc)
+    Poll poll = new Poll()
+            .withTitle(title)
+            .withDescription(desc)
             .withId(POLL_ID)
 
     Participant alice = new Participant()

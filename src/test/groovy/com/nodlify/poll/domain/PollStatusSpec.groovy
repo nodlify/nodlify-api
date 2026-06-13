@@ -11,9 +11,12 @@ class PollStatusSpec extends Specification {
     static final Instant NOW = Instant.parse("2026-06-08T12:00:00Z")
 
     def poll(Instant deadline, List<Instant> optionEnds) {
-        def p = Poll.from(Title.of("Trip"), Description.of("desc"), deadline)
+        def p = new Poll()
+                .withTitle(Title.of("Trip"))
+                .withDescription(Description.of("desc"))
+                .withVotingDeadline(deadline)
         optionEnds.each { end ->
-            p.addOption(new TimeRange(end.minusSeconds(3600), end), false)
+            p.addOption(TimeOption.of(new TimeRange(end.minusSeconds(3600), end), false))
         }
         return p
     }

@@ -1,5 +1,6 @@
 package com.nodlify.poll.infrastructure
 
+import org.springframework.context.ApplicationEventPublisher
 import spock.lang.Specification
 import spock.lang.Subject
 
@@ -10,7 +11,7 @@ import static com.nodlify.poll.application.VoteUseCaseTestConfig.voteUseCase
 class VoteIntegrationSpec extends Specification implements VoteApiTrait {
 
     @Subject
-    def controller = new VoteApi(voteUseCase())
+    def controller = new VoteApi(voteUseCase(), new PollEventPublisher(Mock(ApplicationEventPublisher)))
 
     def "should be able to cast vote"() {
         given:
@@ -18,7 +19,7 @@ class VoteIntegrationSpec extends Specification implements VoteApiTrait {
         def request = createCastVoteRequest()
 
         when:
-        def response = controller.castVote(pollId, request)
+        def response = controller.castVote(pollId, request, null)
 
         then:
         response.statusCode.value() == 201

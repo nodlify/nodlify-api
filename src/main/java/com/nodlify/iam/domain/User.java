@@ -6,7 +6,6 @@ import com.nodlify.shared.domain.Identifier;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
 import lombok.With;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
@@ -25,12 +24,11 @@ import static jakarta.persistence.CascadeType.*;
 @Entity
 @Table(name = "users")
 @AllArgsConstructor
-@NoArgsConstructor
 @EntityListeners(AuditingEntityListener.class)
 public class User {
 
     @EmbeddedId
-    private Identifier id = Identifier.generate();
+    private Identifier id;
 
     @Column(name = "email")
     private Email email;
@@ -57,12 +55,18 @@ public class User {
     @Column(name = "display_name")
     private DisplayName displayName;
 
+    public User() {
+        this.id = Identifier.generate();
+    }
+
     public User(Email email, Password password) {
+        this();
         this.password = password;
         this.email = email;
     }
 
     public User(Email email, Password password, DisplayName displayName) {
+        this();
         this.password = password;
         this.email = email;
         this.displayName = displayName;

@@ -1,6 +1,5 @@
 package com.nodlify.iam.infrastructure;
 
-import com.nodlify.iam.domain.UserNotFoundException;
 import com.nodlify.iam.domain.UserRepository;
 import com.nodlify.shared.domain.Email;
 import lombok.RequiredArgsConstructor;
@@ -23,6 +22,6 @@ class UserAuthenticationService implements UserDetailsService {
     public @NonNull UserDetails loadUserByUsername(@NonNull String userEmail) throws UsernameNotFoundException {
         return userRepository.findByEmail(Email.of(userEmail))
                 .map(UserAuthentication::from)
-                .orElseThrow(() -> UserNotFoundException.withEmail(userEmail));
+                .orElseThrow(() -> new UsernameNotFoundException("User not found"));
     }
 }

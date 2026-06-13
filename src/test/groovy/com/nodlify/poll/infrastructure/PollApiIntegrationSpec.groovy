@@ -8,6 +8,7 @@ import com.nodlify.poll.domain.Description
 import com.nodlify.poll.domain.Poll
 import com.nodlify.poll.domain.Title
 import com.nodlify.shared.domain.Identifier
+import org.springframework.context.ApplicationEventPublisher
 import org.springframework.security.core.Authentication
 import spock.lang.Execution
 import spock.lang.Specification
@@ -26,7 +27,8 @@ class PollApiIntegrationSpec extends Specification implements PollApiTrait {
 
     @Subject
     def userUseCase = Mock(UserUseCase)
-    def controller = new PollApi(pollUseCase, userUseCase)
+    def eventPublisher = new PollEventPublisher(Mock(ApplicationEventPublisher))
+    def controller = new PollApi(pollUseCase, userUseCase, eventPublisher)
 
     def "should get poll"() {
         given:
@@ -76,7 +78,7 @@ class PollApiIntegrationSpec extends Specification implements PollApiTrait {
         def req = createPollRequest()
 
         when:
-        def response = controller.createPoll(req)
+        def response = controller.createPoll(req, null)
 
         then:
         def poll = response.body
@@ -91,7 +93,7 @@ class PollApiIntegrationSpec extends Specification implements PollApiTrait {
         setupTestData()
 
         when:
-        def response = controller.deletePoll(pollId)
+        def response = controller.deletePoll(pollId, null)
 
         then:
         response.statusCode.value() == 204
@@ -102,7 +104,7 @@ class PollApiIntegrationSpec extends Specification implements PollApiTrait {
         setupTestData()
 
         when:
-        def response = controller.deletePoll("id doesn't exist")
+        def response = controller.deletePoll("id doesn't exist", null)
 
         then:
         response.statusCode.value() == 204
@@ -114,7 +116,7 @@ class PollApiIntegrationSpec extends Specification implements PollApiTrait {
         def request = createOptionRequest()
 
         when:
-        def response = controller.addOption(pollId, request)
+        def response = controller.addOption(pollId, request, null)
 
         then:
         response.statusCode.value() == 201
@@ -177,7 +179,7 @@ class PollApiIntegrationSpec extends Specification implements PollApiTrait {
         def optionId = pollUseCase.getPoll(Identifier.of(pollId)).options().first().optionId()
 
         when:
-        def response = controller.removeOption(pollId, optionId)
+        def response = controller.removeOption(pollId, optionId, null)
 
         then:
         response.statusCode.value() == 200
@@ -187,7 +189,9 @@ class PollApiIntegrationSpec extends Specification implements PollApiTrait {
     def "should return polls for authenticated user"() {
         given:
         def owner = "owner@example.com"
-        def poll = Poll.from(Title.of("Owner's poll"), Description.of("desc"))
+        def poll = new Poll()
+                .withTitle(Title.of("Owner's poll"))
+                .withDescription(Description.of("desc"))
         poll.@createdBy = owner
         PollUseCaseTestConfig.repository.save(poll)
 

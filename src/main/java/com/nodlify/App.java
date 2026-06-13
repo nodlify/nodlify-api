@@ -5,7 +5,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.modulith.Modulithic;
 
 
-@Modulithic(sharedModules = {"bootstrap", "shared"})
+@Modulithic(sharedModules = "shared")
 @SpringBootApplication
 public class App {
 

@@ -17,6 +17,6 @@ class SetupView {
         if (applicationSetupUseCase.setupCompleted()) {
             return "redirect:/";
         }
-        return "setup";
+        return "pages/setup";
     }
 }

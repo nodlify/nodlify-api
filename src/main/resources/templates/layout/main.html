@@ -20,7 +20,7 @@
         document.addEventListener('alpine:init', () => {
             Alpine.store('i18n', {
                 dict: {},
-                t(key) {
+                local(key) {
                     return this.dict[key] ?? key;
                 }
             });

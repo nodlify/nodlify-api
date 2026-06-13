@@ -71,12 +71,39 @@
             </div>
 
             <div class="vote-closed-banner" x-show="!votingOpen" x-cloak
-                 x-text="poll.status === 'DECIDED' ? $store.i18n.t('vote.decidedBanner') : $store.i18n.t('vote.closedBanner')"></div>
+                 x-text="poll.status === 'DECIDED' ? $store.i18n.message('vote.decidedBanner') : $store.i18n.message('vote.closedBanner')"></div>
+
+            <div class="name-section" x-show="votingOpen" x-cloak>
+                <div class="section-title mb-0">
+                    <span th:text="#{vote.whoAreYou}">Who are you?</span>
+                    <span class="hint" th:text="#{vote.whoHint}">Required so the organizer knows who voted</span>
+                </div>
+                <div class="row">
+                    <label>
+                        <span th:text="#{vote.yourName}">Your name</span>
+                        <input type="text" th:placeholder="#{vote.namePlaceholder}" x-model="name" x-ref="nameInput"
+                               :disabled="identityKnown"/>
+                    </label>
+                    <label>
+                        <span><span th:text="#{vote.email}">Email</span> <span class="ml-1.5 text-xs text-[var(--muted-2)]" th:text="#{vote.optionalParen}">(optional)</span></span>
+                        <input type="email" placeholder="anja@acme.io" x-model="email" :disabled="identityKnown"/>
+                    </label>
+                </div>
+                <span class="text-xs text-[var(--muted)]" th:text="#{vote.emailHint}">
+          Add your email and we'll send you the calendar invite once the time is locked.
+                </span>
+                <div class="mt-4" x-show="!identityKnown">
+                    <button type="button" class="btn btn-primary" @click="submitIdentity()"
+                            x-text="$store.i18n.message('vote.startVoting')">Start voting</button>
+                </div>
+            </div>
+
+            <div class="vote-action-error" x-show="actionError" x-text="actionError" x-cloak></div>
 
             <div class="options-section" x-show="poll.type === 'TIME'" x-cloak>
                 <div class="section-title">
                     <span th:text="#{vote.pick}">Pick what works for you</span>
-                    <span class="hint" x-text="filledCount + '/' + poll.options.length + ' ' + $store.i18n.t('vote.answered')"></span>
+                    <span class="hint" x-text="filledCount + '/' + poll.options.length + ' ' + $store.i18n.message('vote.answered')"></span>
                 </div>
                 <div class="option-list">
                     <template x-for="opt in poll.options" :key="opt.id">
@@ -100,22 +127,22 @@
                             </div>
                             <div class="vote-buttons">
                                 <button class="vote-btn yes" :class="{ active: votes[opt.id] === 'yes' }"
-                                        :disabled="!votingOpen"
-                                        @click="cast(opt.id, 'yes')" :aria-label="$store.i18n.t('vote.yes')">
+                                        :disabled="!canVote"
+                                        @click="cast(opt.id, 'yes')" :aria-label="$store.i18n.message('vote.yes')">
                                     <span class="glyph">✓</span>
-                                    <span class="lbl" x-text="$store.i18n.t('vote.yes')">Yes</span>
+                                    <span class="lbl" x-text="$store.i18n.message('vote.yes')">Yes</span>
                                 </button>
                                 <button class="vote-btn maybe" :class="{ active: votes[opt.id] === 'maybe' }"
-                                        :disabled="!votingOpen"
-                                        @click="cast(opt.id, 'maybe')" :aria-label="$store.i18n.t('vote.maybe')">
+                                        :disabled="!canVote"
+                                        @click="cast(opt.id, 'maybe')" :aria-label="$store.i18n.message('vote.maybe')">
                                     <span class="glyph">?</span>
-                                    <span class="lbl" x-text="$store.i18n.t('vote.maybe')">Maybe</span>
+                                    <span class="lbl" x-text="$store.i18n.message('vote.maybe')">Maybe</span>
                                 </button>
                                 <button class="vote-btn no" :class="{ active: votes[opt.id] === 'no' }"
-                                        :disabled="!votingOpen"
-                                        @click="cast(opt.id, 'no')" :aria-label="$store.i18n.t('vote.no')">
+                                        :disabled="!canVote"
+                                        @click="cast(opt.id, 'no')" :aria-label="$store.i18n.message('vote.no')">
                                     <span class="glyph">✕</span>
-                                    <span class="lbl" x-text="$store.i18n.t('vote.no')">No</span>
+                                    <span class="lbl" x-text="$store.i18n.message('vote.no')">No</span>
                                 </button>
                             </div>
                         </div>
@@ -127,13 +154,13 @@
                 <div class="section-title">
                     <span th:text="#{vote.pickOption}">Make your choice</span>
                     <span class="hint"
-                          x-text="poll.choiceType === 'SINGLE' ? $store.i18n.t('vote.pickOne') : $store.i18n.t('vote.pickMany')"></span>
+                          x-text="poll.choiceType === 'SINGLE' ? $store.i18n.message('vote.pickOne') : $store.i18n.message('vote.pickMany')"></span>
                 </div>
                 <div class="option-list">
                     <template x-for="opt in poll.options" :key="opt.id">
                         <button type="button" class="option-card simple-option"
                                 :class="{ 'has-yes': votes[opt.id] === 'yes' }"
-                                :disabled="!votingOpen"
+                                :disabled="!canVote"
                                 @click="selectSimple(opt.id)">
                             <div class="option-info">
                                 <div class="option-day" x-text="opt.label"></div>
@@ -152,29 +179,14 @@
                 </div>
             </div>
 
-            <div class="name-section" x-show="!identityKnown" x-cloak>
-                <div class="section-title mb-0">
-                    <span th:text="#{vote.whoAreYou}">Who are you?</span>
-                    <span class="hint" th:text="#{vote.whoHint}">Required so the organizer knows who voted</span>
-                </div>
-                <div class="row">
-                    <label>
-                        <span th:text="#{vote.yourName}">Your name</span>
-                        <input type="text" th:placeholder="#{vote.namePlaceholder}" x-model="name" x-ref="nameInput"/>
-                    </label>
-                    <label>
-                        <span><span th:text="#{vote.email}">Email</span> <span class="ml-1.5 text-xs text-[var(--muted-2)]" th:text="#{vote.optionalParen}">(optional)</span></span>
-                        <input type="email" placeholder="anja@acme.io" x-model="email"/>
-                    </label>
-                </div>
-                <span class="text-xs text-[var(--muted)]" th:text="#{vote.emailHint}">
-          Add your email and we'll send you the calendar invite once the time is locked.
-                </span>
+            <div class="vote-done-actions mt-4" x-show="identityKnown && votingOpen" x-cloak>
+                <button type="button" class="btn btn-primary" x-show="!votingDone"
+                        @click="markDone()" x-text="$store.i18n.message('vote.done')">Done</button>
+                <button type="button" class="btn btn-ghost" x-show="votingDone"
+                        @click="editVotes()" x-text="$store.i18n.message('vote.editVotes')">Edit votes</button>
             </div>
 
-            <div class="vote-action-error" x-show="actionError" x-text="actionError" x-cloak></div>
-
-            <div class="poll-results">
+            <div class="poll-results" x-show="showResults" x-cloak>
                 <div class="poll-results-head">
                     <span class="eyebrow" th:text="#{vote.results}">Results</span>
                     <h3 th:text="#{vote.results.title}">Group availability</h3>
@@ -232,12 +244,14 @@
             loading: true,
             error: '',
             actionError: '',
+            votingDone: false,
 
             async init() {
                 this.pollId = this.$el.dataset.pollId;
                 await Promise.all([this.loadPoll(), this.loadCurrentUser()]);
                 if (this.error) return;
                 this.restoreParticipant();
+                this.restoreDone();
                 await this.fetchMyParticipant();
                 await this.fetchVotes();
                 this.pollingTimer = window.setInterval(() => this.fetchVotes(), 5000);
@@ -294,6 +308,38 @@
                 }));
             },
 
+            get doneKey() {
+                return 'nodlify:vote-done:' + this.pollId;
+            },
+
+            restoreDone() {
+                try {
+                    this.votingDone = localStorage.getItem(this.doneKey) === '1';
+                } catch (_) {}
+            },
+
+            rememberDone() {
+                try {
+                    localStorage.setItem(this.doneKey, this.votingDone ? '1' : '0');
+                } catch (_) {}
+            },
+
+            async submitIdentity() {
+                this.actionError = '';
+                const ok = await this.ensureParticipant();
+                if (!ok && !this.actionError) this.actionError = this.$store.i18n.message('vote.submitError');
+            },
+
+            markDone() {
+                this.votingDone = true;
+                this.rememberDone();
+            },
+
+            editVotes() {
+                this.votingDone = false;
+                this.rememberDone();
+            },
+
             async fetchVotes() {
                 try {
                     const res = await fetch('/api/v1/polls/' + encodeURIComponent(this.pollId) + '/results',
@@ -327,7 +373,7 @@
                     const res = await fetch('/api/v1/polls/' + encodeURIComponent(this.pollId),
                             {headers: {'Accept': 'application/json'}, credentials: 'same-origin'});
                     if (!res.ok) {
-                        this.error = res.status === 404 ? this.$store.i18n.t('vote.notFound') : this.$store.i18n.t('poll.loadError');
+                        this.error = res.status === 404 ? this.$store.i18n.message('vote.notFound') : this.$store.i18n.message('poll.loadError');
                         return;
                     }
                     const data = await res.json();
@@ -342,7 +388,7 @@
                                         id: opt.optionId,
                                         day: this.formatDay(opt.startAt),
                                         time: opt.wholeDay
-                                                ? this.$store.i18n.t('cp.allDay')
+                                                ? this.$store.i18n.message('cp.allDay')
                                                 : this.formatTime(opt.startAt) + ' – ' + this.formatTime(opt.endAt),
                                     }));
                     this.poll = {
@@ -350,7 +396,7 @@
                         description: data.description || '',
                         organizer: data.organizer || '',
                         location: data.location ? data.location.address : '',
-                        deadline: data.votingDeadline ? this.$store.i18n.t('vote.closes') + ' ' + this.formatDeadline(data.votingDeadline) : '',
+                        deadline: data.votingDeadline ? this.$store.i18n.message('vote.closes') + ' ' + this.formatDeadline(data.votingDeadline) : '',
                         status: data.status || 'VOTING',
                         allowAnonymous: data.allowAnonymous || false,
                         type: data.type || 'TIME',
@@ -363,7 +409,7 @@
                         })),
                     };
                 } catch (_) {
-                    this.error = this.$store.i18n.t('poll.loadError');
+                    this.error = this.$store.i18n.message('poll.loadError');
                 } finally {
                     this.loading = false;
                 }
@@ -395,7 +441,7 @@
             async ensureParticipant() {
                 if (this.participantId) return true;
                 if (!this.currentUser && !this.poll.allowAnonymous && !this.name.trim()) {
-                    this.actionError = this.$store.i18n.t('vote.addName');
+                    this.actionError = this.$store.i18n.message('vote.addName');
                     this.$nextTick(() => this.$refs.nameInput?.focus());
                     return false;
                 }
@@ -425,14 +471,14 @@
             },
 
             async cast(optId, value) {
-                if (!this.votingOpen || this.votes[optId] === value) return;
+                if (!this.canVote || this.votes[optId] === value) return;
                 this.actionError = '';
                 const previous = this.votes[optId];
                 let version = null;
 
                 try {
                     if (!await this.ensureParticipant()) {
-                        if (!this.actionError) this.actionError = this.$store.i18n.t('vote.submitError');
+                        if (!this.actionError) this.actionError = this.$store.i18n.message('vote.submitError');
                         return;
                     }
 
@@ -454,7 +500,7 @@
                     if (!response.ok) {
                         if (this.voteVersions[optId] === version) {
                             this.votes = {...this.votes, [optId]: previous};
-                            this.actionError = this.$store.i18n.t('vote.submitError');
+                            this.actionError = this.$store.i18n.message('vote.submitError');
                         }
                         return;
                     }
@@ -464,7 +510,7 @@
                 } catch (_) {
                     if (version !== null && this.voteVersions[optId] === version) {
                         this.votes = {...this.votes, [optId]: previous};
-                        this.actionError = this.$store.i18n.t('vote.submitError');
+                        this.actionError = this.$store.i18n.message('vote.submitError');
                     }
                 } finally {
                     if (version !== null && this.voteVersions[optId] === version) {
@@ -476,7 +522,7 @@
             },
 
             async selectSimple(optId) {
-                if (!this.votingOpen) return;
+                if (!this.canVote) return;
                 this.actionError = '';
                 const selected = this.votes[optId] === 'yes';
                 if (this.poll.choiceType === 'SINGLE') {
@@ -491,7 +537,7 @@
                 const snapshot = {...this.votes};
                 try {
                     if (!await this.ensureParticipant()) {
-                        if (!this.actionError) this.actionError = this.$store.i18n.t('vote.submitError');
+                        if (!this.actionError) this.actionError = this.$store.i18n.message('vote.submitError');
                         return;
                     }
                     if (select) {
@@ -522,12 +568,18 @@
                     await this.fetchVotes();
                 } catch (_) {
                     this.votes = snapshot;
-                    this.actionError = this.$store.i18n.t('vote.submitError');
+                    this.actionError = this.$store.i18n.message('vote.submitError');
                 }
             },
 
             get votingOpen() {
                 return this.poll.status === 'VOTING';
+            },
+            get canVote() {
+                return this.votingOpen && this.identityKnown && !this.votingDone;
+            },
+            get showResults() {
+                return this.votingDone || !this.votingOpen;
             },
             get canEdit() {
                 return (this.currentUser?.roles || []).includes('ADMIN');

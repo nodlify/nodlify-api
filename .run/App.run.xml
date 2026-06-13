@@ -1,7 +1,6 @@
 <component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="App" type="SpringBootApplicationConfigurationType" factoryName="Spring Boot" nameIsGenerated="true">
-    <option name="ACTIVE_PROFILES" value="swagger,observability,local" />
-    <option name="DEBUG_MODE" value="false" />
+  <configuration default="false" name="App" type="SpringBootApplicationConfigurationType" factoryName="Spring Boot">
+    <option name="ACTIVE_PROFILES" value="frontend,swagger,observability,hsqldb,local" />
     <option name="FRAME_DEACTIVATION_UPDATE_POLICY" value="UpdateClassesAndResources" />
     <module name="nodlify-api.main" />
     <option name="SPRING_BOOT_MAIN_CLASS" value="com.nodlify.App" />
@@ -11,6 +10,15 @@
       <option name="region" />
       <option name="useCurrentConnection" value="false" />
     </extension>
+    <method v="2">
+      <option name="Make" enabled="true" />
+    </method>
+  </configuration>
+  <configuration default="false" name="App" type="SpringBootApplicationConfigurationType" factoryName="Spring Boot" nameIsGenerated="true">
+    <option name="ACTIVE_PROFILES" value="swagger,observability,frontend,local" />
+    <option name="FRAME_DEACTIVATION_UPDATE_POLICY" value="UpdateClassesAndResources" />
+    <module name="nodlify-api.main" />
+    <option name="SPRING_BOOT_MAIN_CLASS" value="com.nodlify.App" />
     <method v="2">
       <option name="Make" enabled="true" />
     </method>

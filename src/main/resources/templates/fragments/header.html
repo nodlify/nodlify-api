@@ -6,7 +6,7 @@
         class="home-nav"
         x-data="{
             displayName: '',
-            menuOpen: false,
+            open: false,
             get initials() {
                 const value = this.displayName.trim();
                 if (!value) return '?';
@@ -34,7 +34,7 @@
             }
         }"
         x-init="loadUserInfo()"
-        @keydown.escape.window="menuOpen = false">
+        @keydown.escape.window="open = false">
     <div class="wrap home-nav-inner">
         <a href="/"><span class="logo">nodlify<span class="dot">.</span></span></a>
         <nav class="home-nav-links">
@@ -44,19 +44,19 @@
         <div class="home-nav-right">
             <input class="search-input" type="search" th:placeholder="#{nav.search}" placeholder="Search polls?"/>
 
-            <div class="avatar-menu-wrap" @click.outside="menuOpen = false">
+            <div class="avatar-menu-wrap" @click.outside="open = false">
                 <button class="avatar-button"
                         type="button"
                         aria-label="Profile"
-                        :aria-expanded="menuOpen.toString()"
+                        :aria-expanded="open.toString()"
                         aria-haspopup="menu"
                         :title="displayName || 'Profile'"
-                        @click="menuOpen = !menuOpen"
+                        @click="open = !open"
                         x-text="initials">?
                 </button>
 
                 <div class="avatar-menu"
-                     x-show="menuOpen"
+                     x-show="open"
                      x-transition.origin.top.right
                      x-cloak
                      role="menu">

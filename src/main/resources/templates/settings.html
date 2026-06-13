@@ -35,8 +35,8 @@
        status: { type: '', message: '' },
        saving: false,
 
-       t(key) {
-         return this.$store.i18n.t(key);
+       local(key) {
+         return this.$store.i18n.message(key);
        },
        csrfHeaders() {
          const token = document.querySelector('meta[name=_csrf]')?.content;

@@ -1,3 +1,5 @@
+@import "tailwindcss/theme.css" layer(theme);
+
 @import "../static/css/styles.css";
 @import "../static/css/home.css";
 @import "../static/css/auth.css";
@@ -7,4 +9,4 @@
 @import "../static/css/vote.css";
 @import "../static/css/admin.css";
 
-@tailwind utilities;
+@import "tailwindcss/utilities.css" source("../templates");

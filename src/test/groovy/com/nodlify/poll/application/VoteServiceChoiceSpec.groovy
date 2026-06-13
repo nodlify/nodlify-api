@@ -24,7 +24,11 @@ class VoteServiceChoiceSpec extends Specification {
     Identifier optB = Identifier.of("e5f6a7b8-3333-4444-5555-666677778888")
 
     Poll simplePoll(choiceType) {
-        Poll.from(Title.of("Pick a meal"), Description.EMPTY, null, false, SIMPLE, choiceType)
+        new Poll()
+                .withTitle(Title.of("Pick a meal"))
+                .withDescription(Description.EMPTY)
+                .withType(SIMPLE)
+                .withChoiceType(choiceType)
     }
 
     def "single-choice poll keeps only the latest vote per participant"() {

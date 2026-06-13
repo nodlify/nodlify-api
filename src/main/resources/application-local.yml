@@ -1,26 +1,16 @@
-spring:
+# for local development with HyperSQL
+NODLIFY_DATABASE_FILE: ./data/nodlify
 
+spring:
   jpa:
+    # ddl-auto is left to the active datasource profile (validate on Postgres, none on HyperSQL).
     generate-ddl: false
-    hibernate:
-      ddl-auto: validate
     show-sql: true
     properties:
       hibernate:
         show_sql: true
-
-  datasource:
-    url: jdbc:postgresql://${NODLIFY_DATABASE_URL:localhost:5432/nodlify}
-    username: ${NODLIFY_DATABASE_USER:root}
-    password: ${NODLIFY_DATABASE_PASS:pass}
-    name: nodlify
-    hikari:
-      maximum-pool-size: 20
-
-  flyway:
-    enabled: true
-    baseline-on-migrate: true
-    validate-on-migrate: true
+        format_sql: true
+        use_sql_comments: true
 
 # override observability config
 nodlify:
@@ -30,3 +20,9 @@ nodlify:
       logged-statuses: [ 400, 401, 403, 409, 500, 503 ]
     audit:
       enabled: true
+
+gg:
+  jte:
+    development-mode: true
+    templateLocation: src/main/jte
+    templateSuffix: .jte

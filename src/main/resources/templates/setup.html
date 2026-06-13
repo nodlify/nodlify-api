@@ -65,7 +65,7 @@
                     <button type="submit" class="btn auth-submit" :disabled="loading || !domain.trim()">
                         <img x-show="loading" x-cloak th:src="@{/icons/spinner.svg}" class="setup-spinner" alt=""
                              aria-hidden="true">
-                        <span x-text="loading ? $store.i18n.t('setup.saving') : $store.i18n.t('common.continue')">Continue</span>
+                        <span x-text="loading ? $store.i18n.message('setup.saving') : $store.i18n.message('common.continue')">Continue</span>
                         <span class="arrow" x-show="!loading">→</span>
                     </button>
                 </form>
@@ -90,7 +90,7 @@
                             <input :type="showPassword ? 'text' : 'password'" id="password" x-model="password"
                                    required autocomplete="new-password" placeholder="••••••••"/>
                             <button type="button" class="toggle-pw" @click="showPassword = !showPassword"
-                                    x-text="showPassword ? $store.i18n.t('common.hide') : $store.i18n.t('common.show')"></button>
+                                    x-text="showPassword ? $store.i18n.message('common.hide') : $store.i18n.message('common.show')"></button>
                         </div>
                     </div>
 
@@ -98,7 +98,7 @@
                             :disabled="loading || !email.trim() || !password.trim()">
                         <img x-show="loading" x-cloak th:src="@{/icons/spinner.svg}" class="setup-spinner" alt=""
                              aria-hidden="true">
-                        <span x-text="loading ? $store.i18n.t('setup.creating') : $store.i18n.t('common.continue')">Continue</span>
+                        <span x-text="loading ? $store.i18n.message('setup.creating') : $store.i18n.message('common.continue')">Continue</span>
                         <span class="arrow" x-show="!loading">→</span>
                     </button>
                 </form>
@@ -124,7 +124,7 @@
                 <button @click="completeSetup()" class="btn auth-submit" :disabled="loading">
                     <img x-show="loading" x-cloak th:src="@{/icons/spinner.svg}" class="setup-spinner" alt=""
                          aria-hidden="true">
-                    <span x-text="loading ? $store.i18n.t('setup.finalising') : $store.i18n.t('setup.complete')">Complete setup</span>
+                    <span x-text="loading ? $store.i18n.message('setup.finalising') : $store.i18n.message('setup.complete')">Complete setup</span>
                     <span class="arrow" x-show="!loading">→</span>
                 </button>
             </div>
@@ -161,7 +161,7 @@
                         headers: {'Content-Type': 'application/json'},
                         body: JSON.stringify({domain: this.domain.trim()})
                     });
-                    if (!res.ok) throw new Error(await res.text().catch(() => null) || this.$store.i18n.t('setup.errorDomain'));
+                    if (!res.ok) throw new Error(await res.text().catch(() => null) || this.$store.i18n.message('setup.errorDomain'));
                     this.step = 2;
                 } catch (e) {
                     this.error = e.message;
@@ -179,7 +179,7 @@
                         headers: {'Content-Type': 'application/json'},
                         body: JSON.stringify({email: this.email.trim(), password: this.password})
                     });
-                    if (!res.ok) throw new Error(await res.text().catch(() => null) || this.$store.i18n.t('setup.errorAdmin'));
+                    if (!res.ok) throw new Error(await res.text().catch(() => null) || this.$store.i18n.message('setup.errorAdmin'));
                     this.step = 3;
                 } catch (e) {
                     this.error = e.message;
@@ -193,7 +193,7 @@
                 this.error = null;
                 try {
                     const res = await fetch('/api/v1/setup', {method: 'POST'});
-                    if (!res.ok) throw new Error(await res.text().catch(() => null) || this.$store.i18n.t('setup.errorComplete'));
+                    if (!res.ok) throw new Error(await res.text().catch(() => null) || this.$store.i18n.message('setup.errorComplete'));
                     window.location.href = '/login';
                 } catch (e) {
                     this.error = e.message;

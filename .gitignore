@@ -35,3 +35,14 @@ out/
 
 ### VS Code ###
 .vscode/
+
+### SQLite (self-hosting datasource) ###
+*.db
+*.db-shm
+*.db-wal
+*.db-journal
+!/data/.keep
+/data/
+
+# jte
+/jte-generated

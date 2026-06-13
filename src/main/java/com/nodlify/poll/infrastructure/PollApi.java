@@ -20,6 +20,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 import static org.springframework.http.HttpStatus.CREATED;
 import static org.springframework.http.HttpStatus.OK;
@@ -33,6 +34,7 @@ class PollApi {
 
     private final PollUseCase pollUseCase;
     private final UserUseCase userUseCase;
+    private final PollEventPublisher eventPublisher;
 
     @GetMapping
     @Operation(summary = "List my polls", description = "Returns all polls created by the authenticated user")
@@ -51,7 +53,10 @@ class PollApi {
 
     @PostMapping
     @Operation(summary = "Create new poll", description = "Creates a new poll with provided title, description, settings, optional location, and date options")
-    ResponseEntity<PollData> createPoll(@Valid @RequestBody CreatePollRequest req) {
+    ResponseEntity<PollData> createPoll(
+            @Valid @RequestBody CreatePollRequest req,
+            Authentication authentication
+    ) {
         var command = new CreatePollCommand(
                 req.getTitle(),
                 req.getDescription(),
@@ -62,23 +67,28 @@ class PollApi {
                 req.getPollType(),
                 req.getChoiceType()
         );
-        return ResponseEntity.status(CREATED).body(pollUseCase.createPoll(command));
+        var data = pollUseCase.createPoll(command);
+        eventPublisher.publish("poll_created", authentication, Map.of("pollId", data.id()));
+        return ResponseEntity.status(CREATED).body(data);
     }
 
     @PatchMapping("/{pollId}")
     @Operation(summary = "Update poll details", description = "Updates the title and description of an existing poll")
     ResponseEntity<PollData> updatePoll(
             @PathVariable String pollId,
-            @Valid @RequestBody UpdatePollRequest request
+            @Valid @RequestBody UpdatePollRequest request,
+            Authentication authentication
     ) {
         var data = pollUseCase.updateDetails(Identifier.of(pollId), request.getTitle(), request.getDescription());
+        eventPublisher.publish("poll_updated", authentication, Map.of("pollId", pollId));
         return ResponseEntity.ok(data);
     }
 
     @DeleteMapping("/{pollId}")
     @Operation(summary = "Delete poll", description = "Deletes poll by given identifier")
-    ResponseEntity<?> deletePoll(@PathVariable String pollId) {
+    ResponseEntity<?> deletePoll(@PathVariable String pollId, Authentication authentication) {
         pollUseCase.deletePoll(Identifier.of(pollId));
+        eventPublisher.publish("poll_deleted", authentication, Map.of("pollId", pollId));
         return ResponseEntity.noContent().build();
     }
 
@@ -86,9 +96,11 @@ class PollApi {
     @Operation(summary = "Add option to poll", description = "Adds an option (time range or whole-day) to an existing poll")
     ResponseEntity<PollData> addOption(
             @PathVariable String pollId,
-            @Valid @RequestBody CreateOptionRequest request
+            @Valid @RequestBody CreateOptionRequest request,
+            Authentication authentication
     ) {
         var data = pollUseCase.addOption(Identifier.of(pollId), request.toOption());
+        eventPublisher.publish("option_added", authentication, Map.of("pollId", pollId));
         return ResponseEntity.status(CREATED).body(data);
     }
 
@@ -96,9 +108,13 @@ class PollApi {
     @Operation(summary = "Remove option from poll", description = "Removes an option from an existing poll")
     ResponseEntity<PollData> removeOption(
             @PathVariable String pollId,
-            @PathVariable String optionId
+            @PathVariable String optionId,
+            Authentication authentication
     ) {
         var data = pollUseCase.removeOption(Identifier.of(pollId), Identifier.of(optionId));
+        eventPublisher.publish("option_removed", authentication, Map.of(
+                "pollId", pollId,
+                "optionId", optionId));
         return ResponseEntity.status(OK).body(data);
     }
 
@@ -111,6 +127,9 @@ class PollApi {
     ) {
         var participant = participantFrom(request, authentication);
         var registered = pollUseCase.registerParticipant(Identifier.of(pollId), participant);
+        eventPublisher.publish("participant_registered", authentication, Map.of(
+                "pollId", pollId,
+                "participantId", registered.id()));
         return ResponseEntity.status(CREATED).body(registered);
     }
 
@@ -133,9 +152,11 @@ class PollApi {
     @Operation(summary = "Add location to poll", description = "Adds a location to an existing poll")
     ResponseEntity<PollData> addLocation(
             @PathVariable String pollId,
-            @RequestBody CreateLocationRequest request
+            @RequestBody CreateLocationRequest request,
+            Authentication authentication
     ) {
         var data = pollUseCase.addLocation(Identifier.of(pollId), request.toLocationData());
+        eventPublisher.publish("location_added", authentication, Map.of("pollId", pollId));
         return ResponseEntity.status(CREATED).body(data);
     }
 
@@ -143,9 +164,13 @@ class PollApi {
     @Operation(summary = "Change poll status", description = "Marks the poll as DECIDED or CLOSED, or reopens it (VOTING)")
     ResponseEntity<PollData> changeStatus(
             @PathVariable String pollId,
-            @RequestBody ChangeStatusRequest request
+            @RequestBody ChangeStatusRequest request,
+            Authentication authentication
     ) {
         var data = pollUseCase.changeStatus(Identifier.of(pollId), request.toStatus());
+        eventPublisher.publish("poll_status_changed", authentication, Map.of(
+                "pollId", pollId,
+                "status", data.status()));
         return ResponseEntity.ok(data);
     }
 

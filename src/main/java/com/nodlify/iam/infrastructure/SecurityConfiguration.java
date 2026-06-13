@@ -46,6 +46,8 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.*;
 import org.springframework.security.web.authentication.password.HaveIBeenPwnedRestApiPasswordChecker;
 import org.springframework.security.web.authentication.rememberme.TokenBasedRememberMeServices;
+import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
+import org.springframework.security.web.csrf.CsrfFilter;
 import org.springframework.security.web.servlet.util.matcher.PathPatternRequestMatcher;
 import org.springframework.security.web.util.matcher.MediaTypeRequestMatcher;
 import org.springframework.security.web.util.matcher.RequestMatcher;
@@ -70,7 +72,7 @@ import static org.springframework.security.config.Customizer.withDefaults;
 @RequiredArgsConstructor
 class SecurityConfiguration {
 
-    private static final String[] SETUP_ENDPOINTS = {"/api/v1/setup/**"};
+    private static final String[] IGNORING_ENDPOINTS = {"/api/v1/setup/**"};
 
     private final UserDetailsService userDetailsService;
     private final ApplicationSetupUseCase applicationSetupUseCase;
@@ -104,7 +106,12 @@ class SecurityConfiguration {
     @Order(2)
     SecurityFilterChain defaultSecurityFilterChain(HttpSecurity http) {
         http
-                .csrf(csrf -> csrf.ignoringRequestMatchers(SETUP_ENDPOINTS))
+                .csrf(csrf -> csrf
+                        .ignoringRequestMatchers(IGNORING_ENDPOINTS)
+                        .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
+                        .csrfTokenRequestHandler(new CsrfTokenRequestHandlerConfig())
+                )
+                .addFilterAfter(new CsrfCookieFilter(), CsrfFilter.class)
                 .addFilterBefore(
                         new SetupRedirectFilter(applicationSetupUseCase),
                         UsernamePasswordAuthenticationFilter.class
@@ -146,7 +153,7 @@ class SecurityConfiguration {
                         .requestMatchers(HttpMethod.DELETE, "/api/v1/polls/*/votes").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/v1/polls/*/participants").permitAll()
                         //
-                        .requestMatchers(SETUP_ENDPOINTS).access((authentication, _) -> {
+                        .requestMatchers(IGNORING_ENDPOINTS).access((authentication, _) -> {
                             if (!applicationSetupUseCase.setupCompleted()) {
                                 return new AuthorizationDecision(true);
                             }

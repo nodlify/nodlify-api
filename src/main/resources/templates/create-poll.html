@@ -130,7 +130,7 @@
                                                @change="options[i].end = $event.target.value"/>
                                     </template>
                                     <template x-if="opt.allDay">
-                                        <span class="allday-tag" x-text="$store.i18n.t('cp.allDay')">All day</span>
+                                        <span class="allday-tag" x-text="$store.i18n.message('cp.allDay')">All day</span>
                                     </template>
                                     <button class="cp-opt-remove" @click="removeOption(i)"
                                             th:attr="aria-label=#{common.remove}">×
@@ -212,9 +212,9 @@
                                             @click="selectLocation(r)"
                                             x-text="r.address"></button>
                                 </template>
-                                <div x-show="locationSearching" class="cp-location-dropdown-status" x-text="$store.i18n.t('cp.searching')">Searching…</div>
+                                <div x-show="locationSearching" class="cp-location-dropdown-status" x-text="$store.i18n.message('cp.searching')">Searching…</div>
                                 <div x-show="!locationSearching && locationQuery.length > 1 && locationResults.length === 0"
-                                     class="cp-location-dropdown-status" x-text="$store.i18n.t('cp.noMatches')">No matches
+                                     class="cp-location-dropdown-status" x-text="$store.i18n.message('cp.noMatches')">No matches
                                 </div>
                                 <button type="button" class="cp-location-dropdown-item cp-location-dropdown-map"
                                         @click="openMapPicker()">
@@ -288,13 +288,13 @@
                 <div class="cp-status">
                     <span class="summary" x-text="statusMessage"></span>
                     <span class="small"
-                          x-text="validCount + ' ' + $store.i18n.t('cp.optionsCount') + (deadline ? ' · ' + $store.i18n.t('cp.deadlineLabel') + ' ' + deadline : '')"></span>
+                          x-text="validCount + ' ' + $store.i18n.message('cp.optionsCount') + (deadline ? ' · ' + $store.i18n.message('cp.deadlineLabel') + ' ' + deadline : '')"></span>
                 </div>
                 <button class="btn" type="button"
                         :disabled="!canCreate || creating"
                         :class="{ 'cursor-not-allowed opacity-40': !canCreate || creating }"
                         @click="submit()">
-                    <span x-text="creating ? $store.i18n.t('cp.creating') : $store.i18n.t('cp.submit')"></span>
+                    <span x-text="creating ? $store.i18n.message('cp.creating') : $store.i18n.message('cp.submit')"></span>
                     <span class="arrow">→</span>
                 </button>
             </div>
@@ -329,7 +329,7 @@
             </div>
             <div id="cp-map" class="cp-map-container"></div>
             <div class="cp-map-footer">
-                <div x-show="!pickedLocationName" class="cp-map-hint" x-text="$store.i18n.t('cp.map.hint')">
+                <div x-show="!pickedLocationName" class="cp-map-hint" x-text="$store.i18n.message('cp.map.hint')">
                     Click on the map or search to select a location
                 </div>
                 <div x-show="pickedLocationName" class="cp-map-picked">
@@ -440,9 +440,9 @@
                 return true;
             },
             get statusMessage() {
-                if (this.canCreate) return this.$store.i18n.t('cp.status.ready');
-                if (!this.title.trim()) return this.$store.i18n.t('cp.status.addTitle');
-                return this.$store.i18n.t('cp.status.almost');
+                if (this.canCreate) return this.$store.i18n.message('cp.status.ready');
+                if (!this.title.trim()) return this.$store.i18n.message('cp.status.addTitle');
+                return this.$store.i18n.message('cp.status.almost');
             },
 
             addOption(allDay) {

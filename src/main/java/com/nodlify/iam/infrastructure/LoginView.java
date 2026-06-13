@@ -29,7 +29,7 @@ class LoginView {
 
     @GetMapping("/register")
     String registerPage() {
-        return "register";
+        return "pages/register";
     }
 
     @PostMapping("/register")

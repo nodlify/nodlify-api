@@ -1,0 +1,19 @@
+spring:
+  docker:
+    compose:
+      enabled: false
+  jpa:
+    generate-ddl: false
+    hibernate:
+      ddl-auto: none
+    database-platform: org.hibernate.dialect.HSQLDialect
+    properties:
+      hibernate:
+        jdbc:
+          time_zone: UTC
+  datasource:
+    # File-based HyperSQL; sql.syntax_pgs aligns boolean/identity handling with the Postgres profile.
+    url: ${NODLIFY_DATABASE_URL:jdbc:hsqldb:file:${NODLIFY_DATABASE_FILE:/app/nodlify};hsqldb.lock_file=false;shutdown=true;sql.syntax_pgs=true}
+    driver-class-name: org.hsqldb.jdbc.JDBCDriver
+    username: ${NODLIFY_DATABASE_USER:sa}
+    password: ${NODLIFY_DATABASE_PASS:}

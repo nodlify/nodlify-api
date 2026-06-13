@@ -1,20 +1,16 @@
 package com.nodlify.observability.audit.domain;
 
 import com.nodlify.shared.domain.Identifier;
-import io.hypersistence.utils.hibernate.type.json.JsonBinaryType;
+import io.hypersistence.utils.hibernate.type.json.JsonType;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
 import lombok.With;
-import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.annotations.Type;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.Instant;
-
-import static org.hibernate.type.SqlTypes.JSON;
 
 
 @With
@@ -22,12 +18,11 @@ import static org.hibernate.type.SqlTypes.JSON;
 @Entity
 @Table(name = "audit_log_events")
 @AllArgsConstructor
-@NoArgsConstructor
 @EntityListeners(AuditingEntityListener.class)
 public class AuditLogEventEntity {
 
     @EmbeddedId
-    private Identifier id = Identifier.generate();
+    private Identifier id;
 
     @Column(nullable = false)
     private Action action;
@@ -41,13 +36,16 @@ public class AuditLogEventEntity {
     @Column(name = "user_agent")
     private String userAgent;
 
-    @Type(JsonBinaryType.class)
-    @JdbcTypeCode(JSON)
-    @Column(columnDefinition = "jsonb")
+    @Type(JsonType.class)
+    @Column(name = "payload")
     private AuditPayload payload;
 
     @CreatedDate
     private Instant createdAt;
+
+    public AuditLogEventEntity() {
+        this.id = Identifier.generate();
+    }
 
     @Override
     public boolean equals(Object o) {

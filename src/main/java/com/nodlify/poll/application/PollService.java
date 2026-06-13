@@ -28,13 +28,13 @@ public class PollService implements PollUseCase {
     @Override
     @CacheEvict(allEntries = true)
     public PollData createPoll(CreatePollCommand command) {
-        var poll = Poll.from(
-                command.title(),
-                command.description(),
-                command.votingDeadline(),
-                command.allowAnonymous(),
-                command.type(),
-                command.choiceType());
+        var poll = new Poll()
+                .withTitle(command.title())
+                .withDescription(command.description())
+                .withVotingDeadline(command.votingDeadline())
+                .withAllowAnonymous(command.allowAnonymous())
+                .withType(command.type())
+                .withChoiceType(command.choiceType());
         if (command.location() != null) {
             poll.addLocation(GeoLocation.of(command.location()));
         }

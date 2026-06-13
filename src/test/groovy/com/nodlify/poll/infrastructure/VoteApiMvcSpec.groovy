@@ -26,6 +26,9 @@ class VoteApiMvcSpec extends MvcSpec {
     @SpringBean
     VoteUseCase voteUseCase = Mock()
 
+    @SpringBean
+    PollEventPublisher eventPublisher = Mock()
+
     @WithMockUser(authorities = "ROLE_USER")
     def "should be able to get votes"() {
         given:

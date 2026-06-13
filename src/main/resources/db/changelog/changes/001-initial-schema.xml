@@ -1,0 +1,285 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+            http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <!-- Database-agnostic type aliases. Specific dialects first; generic fallback last. -->
+    <property name="ts" value="timestamp"/>
+    <property name="json" value="jsonb" dbms="postgresql"/>
+    <property name="json" value="longvarchar" dbms="hsqldb"/>
+    <property name="json" value="json"/>
+
+    <!-- ===================== IAM ===================== -->
+    <changeSet id="001-users" author="nodlify">
+        <createTable tableName="users">
+            <column name="id" type="varchar(255)">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="email" type="varchar(255)">
+                <constraints nullable="false" unique="true" uniqueConstraintName="email_unique"/>
+            </column>
+            <column name="password" type="varchar(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="display_name" type="varchar(255)"/>
+            <column name="created_at" type="${ts}"/>
+            <column name="updated_at" type="${ts}"/>
+        </createTable>
+    </changeSet>
+
+    <changeSet id="001-authorities" author="nodlify">
+        <createTable tableName="authorities">
+            <column name="authority" type="varchar(255)">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="created_at" type="${ts}"/>
+            <column name="updated_at" type="${ts}"/>
+        </createTable>
+    </changeSet>
+
+    <changeSet id="001-user-authorities" author="nodlify">
+        <createTable tableName="user_authorities">
+            <column name="user_id" type="varchar(255)">
+                <constraints nullable="false" primaryKey="true"
+                             foreignKeyName="fk_user_authorities_user"
+                             references="users(id)" deleteCascade="true"/>
+            </column>
+            <column name="authority" type="varchar(255)">
+                <constraints nullable="false" primaryKey="true"
+                             foreignKeyName="fk_user_authorities_authority"
+                             references="authorities(authority)" deleteCascade="true"/>
+            </column>
+        </createTable>
+        <createIndex tableName="user_authorities" indexName="idx_user_authorities_authority">
+            <column name="authority"/>
+        </createIndex>
+    </changeSet>
+
+    <changeSet id="001-config" author="nodlify">
+        <createTable tableName="config">
+            <column name="id" type="varchar(255)">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="domain_url" type="varchar(255)"/>
+            <column name="setup_status" type="varchar(255)"/>
+        </createTable>
+    </changeSet>
+
+    <!-- ===================== OBSERVABILITY ===================== -->
+    <changeSet id="001-audit-log-events" author="nodlify">
+        <createTable tableName="audit_log_events">
+            <column name="id" type="varchar(255)">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="action" type="varchar(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="user_id" type="varchar(255)"/>
+            <column name="remote_address" type="varchar(255)"/>
+            <column name="user_agent" type="varchar(255)"/>
+            <column name="payload" type="${json}"/>
+            <column name="created_at" type="${ts}"/>
+        </createTable>
+        <createIndex tableName="audit_log_events" indexName="idx_audit_log_events_created_at">
+            <column name="created_at"/>
+        </createIndex>
+        <createIndex tableName="audit_log_events" indexName="idx_audit_log_events_action_created_at">
+            <column name="action"/>
+            <column name="created_at"/>
+        </createIndex>
+        <createIndex tableName="audit_log_events" indexName="idx_audit_log_events_user_created_at">
+            <column name="user_id"/>
+            <column name="created_at"/>
+        </createIndex>
+    </changeSet>
+
+    <changeSet id="001-problem-log-events" author="nodlify">
+        <createTable tableName="problem_log_events">
+            <column name="id" type="varchar(255)">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="title" type="text"/>
+            <column name="status" type="int">
+                <constraints nullable="false"/>
+            </column>
+            <column name="detail" type="text"/>
+            <column name="instance" type="text"/>
+            <column name="stack_trace" type="text"/>
+            <column name="invalid_params" type="${json}"/>
+            <column name="created_at" type="${ts}"/>
+        </createTable>
+        <createIndex tableName="problem_log_events" indexName="idx_problem_log_events_created_at">
+            <column name="created_at"/>
+        </createIndex>
+        <createIndex tableName="problem_log_events" indexName="idx_problem_log_events_status">
+            <column name="status"/>
+        </createIndex>
+        <createIndex tableName="problem_log_events" indexName="idx_problem_log_events_title">
+            <column name="title"/>
+        </createIndex>
+    </changeSet>
+
+    <!-- ===================== POLL ===================== -->
+    <changeSet id="001-geo-locations" author="nodlify">
+        <createTable tableName="geo_locations">
+            <column name="id" type="varchar(36)">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="latitude" type="double precision">
+                <constraints nullable="false"/>
+            </column>
+            <column name="longitude" type="double precision">
+                <constraints nullable="false"/>
+            </column>
+            <column name="place_id" type="varchar(255)"/>
+            <column name="address" type="varchar(1000)"/>
+            <column name="created_at" type="${ts}"/>
+            <column name="updated_at" type="${ts}"/>
+        </createTable>
+    </changeSet>
+
+    <changeSet id="001-polls" author="nodlify">
+        <createTable tableName="polls">
+            <column name="id" type="varchar(36)">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="title" type="varchar(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="description" type="varchar(1000)"/>
+            <column name="location_id" type="varchar(36)">
+                <constraints foreignKeyName="fk_polls_location" references="geo_locations(id)"/>
+            </column>
+            <column name="created_by" type="varchar(255)"/>
+            <column name="voting_deadline" type="${ts}"/>
+            <column name="status" type="varchar(20)"/>
+            <column name="allow_anonymous" type="boolean" defaultValueBoolean="false">
+                <constraints nullable="false"/>
+            </column>
+            <column name="type" type="varchar(20)" defaultValue="TIME">
+                <constraints nullable="false"/>
+            </column>
+            <column name="choice_type" type="varchar(20)" defaultValue="MULTIPLE">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_at" type="${ts}"/>
+            <column name="updated_at" type="${ts}"/>
+        </createTable>
+        <createIndex tableName="polls" indexName="idx_polls_location">
+            <column name="location_id"/>
+        </createIndex>
+        <createIndex tableName="polls" indexName="idx_polls_created_by">
+            <column name="created_by"/>
+        </createIndex>
+    </changeSet>
+
+    <changeSet id="001-participants" author="nodlify">
+        <createTable tableName="participants">
+            <column name="id" type="varchar(36)">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="poll_id" type="varchar(36)">
+                <constraints nullable="false"
+                             foreignKeyName="fk_participants_poll"
+                             references="polls(id)" deleteCascade="true"/>
+            </column>
+            <column name="display_name" type="varchar(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="email" type="varchar(255)"/>
+            <column name="phone" type="varchar(50)"/>
+            <column name="user_id" type="varchar(36)"/>
+        </createTable>
+        <createIndex tableName="participants" indexName="idx_participants_poll">
+            <column name="poll_id"/>
+        </createIndex>
+        <createIndex tableName="participants" indexName="idx_participants_user">
+            <column name="user_id"/>
+        </createIndex>
+    </changeSet>
+
+    <changeSet id="001-options" author="nodlify">
+        <createTable tableName="options">
+            <column name="id" type="varchar(36)">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="poll_id" type="varchar(36)">
+                <constraints nullable="false"
+                             foreignKeyName="fk_options_poll"
+                             references="polls(id)" deleteCascade="true"/>
+            </column>
+        </createTable>
+        <createIndex tableName="options" indexName="idx_options_poll">
+            <column name="poll_id"/>
+        </createIndex>
+    </changeSet>
+
+    <changeSet id="001-time-options" author="nodlify">
+        <createTable tableName="time_options">
+            <column name="id" type="varchar(36)">
+                <constraints primaryKey="true" nullable="false"
+                             foreignKeyName="fk_time_options_option"
+                             references="options(id)" deleteCascade="true"/>
+            </column>
+            <column name="start_at" type="${ts}">
+                <constraints nullable="false"/>
+            </column>
+            <column name="end_at" type="${ts}">
+                <constraints nullable="false"/>
+            </column>
+            <column name="whole_day" type="boolean" defaultValueBoolean="false">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet id="001-text-options" author="nodlify">
+        <createTable tableName="text_options">
+            <column name="id" type="varchar(36)">
+                <constraints primaryKey="true" nullable="false"
+                             foreignKeyName="fk_text_options_option"
+                             references="options(id)" deleteCascade="true"/>
+            </column>
+            <column name="label" type="varchar(255)">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet id="001-votes" author="nodlify">
+        <createTable tableName="votes">
+            <column name="participant_id" type="varchar(36)">
+                <constraints nullable="false" primaryKey="true"
+                             foreignKeyName="fk_votes_participant"
+                             references="participants(id)" deleteCascade="true"/>
+            </column>
+            <column name="option_id" type="varchar(36)">
+                <constraints nullable="false" primaryKey="true"
+                             foreignKeyName="fk_votes_option"
+                             references="options(id)" deleteCascade="true"/>
+            </column>
+            <column name="poll_id" type="varchar(36)">
+                <constraints nullable="false"
+                             foreignKeyName="fk_votes_poll"
+                             references="polls(id)" deleteCascade="true"/>
+            </column>
+            <column name="availability" type="varchar(10)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_at" type="${ts}"/>
+            <column name="updated_at" type="${ts}"/>
+        </createTable>
+        <createIndex tableName="votes" indexName="idx_votes_poll">
+            <column name="poll_id"/>
+        </createIndex>
+        <createIndex tableName="votes" indexName="idx_votes_option">
+            <column name="option_id"/>
+        </createIndex>
+        <createIndex tableName="votes" indexName="idx_votes_participant">
+            <column name="participant_id"/>
+        </createIndex>
+    </changeSet>
+
+</databaseChangeLog>

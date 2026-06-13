@@ -18,7 +18,11 @@ class OptionCompatibilitySpec extends Specification {
 
     def "TIME poll accepts time options and rejects text options"() {
         given:
-        def poll = Poll.from(Title.of("Lunch time"), Description.EMPTY, null, false, TIME, MULTIPLE)
+        def poll = new Poll()
+                .withTitle(Title.of("Lunch time"))
+                .withDescription(Description.EMPTY)
+                .withType(TIME)
+                .withChoiceType(MULTIPLE)
 
         when:
         poll.addOption(TimeOption.of(range()))
@@ -35,7 +39,11 @@ class OptionCompatibilitySpec extends Specification {
 
     def "SIMPLE poll accepts text options and rejects time options"() {
         given:
-        def poll = Poll.from(Title.of("Pick a meal"), Description.EMPTY, null, false, SIMPLE, SINGLE)
+        def poll = new Poll()
+                .withTitle(Title.of("Pick a meal"))
+                .withDescription(Description.EMPTY)
+                .withType(SIMPLE)
+                .withChoiceType(SINGLE)
 
         when:
         poll.addOption(TextOption.of("Pizza"))

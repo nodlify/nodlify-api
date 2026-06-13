@@ -61,7 +61,7 @@
                     <div class="cp-link-card mb-8 max-w-none">
                         <span class="link-url flex-1 min-w-0" x-text="shareUrl"></span>
                         <button class="btn btn-sm" type="button" @click="copyLink()"
-                                x-text="copied ? $store.i18n.t('poll.copied') : $store.i18n.t('cp.success.copy')">Copy
+                                x-text="copied ? $store.i18n.message('poll.copied') : $store.i18n.message('cp.success.copy')">Copy
                         </button>
                     </div>
 
@@ -70,18 +70,18 @@
                             <span th:text="#{poll.statusLabel}">Status</span>
                             <span class="status-badge"
                                   :class="{ active: status === 'VOTING', decided: status === 'DECIDED', closed: status === 'CLOSED' }"
-                                  x-text="$store.i18n.t('poll.status.' + (status || 'VOTING').toLowerCase())"></span>
+                                  x-text="$store.i18n.message('poll.status.' + (status || 'VOTING').toLowerCase())"></span>
                         </div>
                         <div class="flex flex-wrap gap-2">
                             <button class="btn btn-sm" type="button" :disabled="busy"
                                     x-show="status !== 'DECIDED'" @click="changeStatus('DECIDED')"
-                                    x-text="$store.i18n.t('poll.markDecided')">Mark as decided</button>
+                                    x-text="$store.i18n.message('poll.markDecided')">Mark as decided</button>
                             <button class="btn btn-sm btn-ghost" type="button" :disabled="busy"
                                     x-show="status !== 'CLOSED'" @click="changeStatus('CLOSED')"
-                                    x-text="$store.i18n.t('poll.closePoll')">Close poll</button>
+                                    x-text="$store.i18n.message('poll.closePoll')">Close poll</button>
                             <button class="btn btn-sm btn-ghost" type="button" :disabled="busy"
                                     x-show="status !== 'VOTING'" @click="changeStatus('VOTING')"
-                                    x-text="$store.i18n.t('poll.reopen')">Reopen</button>
+                                    x-text="$store.i18n.message('poll.reopen')">Reopen</button>
                         </div>
                     </div>
 
@@ -99,10 +99,10 @@
                                     :disabled="!detailsChanged || !detailsValid || busy"
                                     :class="{ 'cursor-not-allowed opacity-40': !detailsChanged || !detailsValid || busy }"
                                     @click="saveDetails()"
-                                    x-text="busy ? $store.i18n.t('poll.saving') : $store.i18n.t('poll.saveDetails')">Save details
+                                    x-text="busy ? $store.i18n.message('poll.saving') : $store.i18n.message('poll.saveDetails')">Save details
                             </button>
                             <button class="btn btn-sm btn-ghost" type="button"
-                                    x-show="detailsChanged" @click="resetDetails()" x-text="$store.i18n.t('common.cancel')">Cancel
+                                    x-show="detailsChanged" @click="resetDetails()" x-text="$store.i18n.message('common.cancel')">Cancel
                             </button>
                         </div>
                     </section>
@@ -127,7 +127,7 @@
                                         <span class="cp-opt-input time" x-text="formatTime(opt.endAt)"></span>
                                     </template>
                                     <template x-if="opt.wholeDay">
-                                        <span class="allday-tag" x-text="$store.i18n.t('cp.allDay')">All day</span>
+                                        <span class="allday-tag" x-text="$store.i18n.message('cp.allDay')">All day</span>
                                     </template>
                                     <button class="cp-opt-remove" type="button"
                                             :disabled="busy"
@@ -156,7 +156,7 @@
                                                @change="saveDraftWhenComplete(draft)"/>
                                     </template>
                                     <template x-if="draft.allDay">
-                                        <span class="allday-tag" x-text="$store.i18n.t('cp.allDay')">All day</span>
+                                        <span class="allday-tag" x-text="$store.i18n.message('cp.allDay')">All day</span>
                                     </template>
                                     <button class="cp-opt-remove" type="button"
                                             :disabled="draft.saving"
@@ -226,7 +226,7 @@
             <div class="wrap cp-bottom-inner">
                 <div class="cp-status">
                     <span class="summary"
-                          x-text="options.length + ' ' + (type === 'SIMPLE' ? $store.i18n.t('poll.optionsPublished') : $store.i18n.t('poll.datesPublished'))"></span>
+                          x-text="options.length + ' ' + (type === 'SIMPLE' ? $store.i18n.message('poll.optionsPublished') : $store.i18n.message('poll.datesPublished'))"></span>
                 </div>
                 <a :href="'/vote/' + pollId" class="btn"><span th:text="#{poll.preview}">Preview voting page</span> <span class="arrow">→</span></a>
             </div>
@@ -287,7 +287,7 @@
                     const res = await fetch('/api/v1/polls/' + encodeURIComponent(this.pollId),
                             {headers: {'Accept': 'application/json'}, credentials: 'same-origin'});
                     if (!res.ok) {
-                        this.error = res.status === 404 ? this.$store.i18n.t('poll.notFound') : this.$store.i18n.t('poll.loadError');
+                        this.error = res.status === 404 ? this.$store.i18n.message('poll.notFound') : this.$store.i18n.message('poll.loadError');
                         return;
                     }
                     const data = await res.json();
@@ -306,7 +306,7 @@
                         this.applyOptions((data.optionGroups || []).flatMap(group => group.options || []));
                     }
                 } catch (_) {
-                    this.error = this.$store.i18n.t('poll.loadError');
+                    this.error = this.$store.i18n.message('poll.loadError');
                 } finally {
                     this.loading = false;
                 }
@@ -324,13 +324,13 @@
                         body: JSON.stringify({status: next}),
                     });
                     if (!res.ok) {
-                        this.error = this.$store.i18n.t('poll.statusError');
+                        this.error = this.$store.i18n.message('poll.statusError');
                         return;
                     }
                     const data = await res.json();
                     this.status = data.status || 'VOTING';
                 } catch (_) {
-                    this.error = this.$store.i18n.t('poll.statusError');
+                    this.error = this.$store.i18n.message('poll.statusError');
                 } finally {
                     this.busy = false;
                 }
@@ -356,7 +356,7 @@
                         }),
                     });
                     if (!res.ok) {
-                        this.error = this.$store.i18n.t('poll.saveError');
+                        this.error = this.$store.i18n.message('poll.saveError');
                         return;
                     }
                     const data = await res.json();
@@ -365,7 +365,7 @@
                     this.form.title = this.title;
                     this.form.description = this.description;
                 } catch (_) {
-                    this.error = this.$store.i18n.t('poll.saveError');
+                    this.error = this.$store.i18n.message('poll.saveError');
                 } finally {
                     this.busy = false;
                 }
@@ -413,14 +413,14 @@
                         body: JSON.stringify(this.draftPayload(draft)),
                     });
                     if (!res.ok) {
-                        this.error = this.$store.i18n.t('poll.addError');
+                        this.error = this.$store.i18n.message('poll.addError');
                         return;
                     }
                     const data = await res.json();
                     this.applyOptions(data.options);
                     this.removeDraft(draft);
                 } catch (_) {
-                    this.error = this.$store.i18n.t('poll.addError');
+                    this.error = this.$store.i18n.message('poll.addError');
                 } finally {
                     draft.saving = false;
                 }
@@ -439,7 +439,7 @@
                         body: JSON.stringify({label}),
                     });
                     if (!res.ok) {
-                        this.error = this.$store.i18n.t('poll.addError');
+                        this.error = this.$store.i18n.message('poll.addError');
                         return;
                     }
                     const data = await res.json();
@@ -448,7 +448,7 @@
                             .map(opt => ({optionId: opt.optionId, label: opt.label}));
                     this.newLabel = '';
                 } catch (_) {
-                    this.error = this.$store.i18n.t('poll.addError');
+                    this.error = this.$store.i18n.message('poll.addError');
                 } finally {
                     this.busy = false;
                 }
@@ -466,12 +466,12 @@
                                 credentials: 'same-origin',
                             });
                     if (!res.ok && res.status !== 204) {
-                        this.error = this.$store.i18n.t('poll.removeError');
+                        this.error = this.$store.i18n.message('poll.removeError');
                         return;
                     }
                     this.options = this.options.filter(o => o.optionId !== optionId);
                 } catch (_) {
-                    this.error = this.$store.i18n.t('poll.removeError');
+                    this.error = this.$store.i18n.message('poll.removeError');
                 } finally {
                     this.busy = false;
                 }

@@ -9,7 +9,7 @@ class HomeView {
 
     @GetMapping("/")
     String landing() {
-        return "index";
+        return "pages/index";
     }
 
     @GetMapping("/home")

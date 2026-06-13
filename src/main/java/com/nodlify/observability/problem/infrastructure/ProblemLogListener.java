@@ -25,11 +25,11 @@ class ProblemLogListener {
     @Transactional
     public void onProblemEvent(ProblemCapturedEvent problemEvent) {
         if (shouldLog(problemEvent)) {
-            log.debug("Handling problem event: {}", problemEvent);
+            log.trace("Handling problem event: {}", problemEvent);
             var entity = ProblemLogEventMapper.toEntity(problemEvent);
             problemLogUseCase.save(entity);
         } else {
-            log.debug("Ignoring problem event: {}", problemEvent);
+            log.trace("Ignoring problem event: {}", problemEvent);
         }
     }
 

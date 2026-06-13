@@ -10,37 +10,8 @@ spring:
     compose:
       lifecycle-management: start_and_stop
 
-  jpa:
-    generate-ddl: false
-    hibernate:
-      ddl-auto: validate
-    properties:
-      hibernate:
-        default_schema: nodlify
-        jdbc:
-          time_zone: UTC
-        show_sql: false
-
-  datasource:
-    url: jdbc:postgresql://${NODLIFY_DATABASE_URL:localhost:5432/nodlify}?currentSchema=nodlify
-    username: ${NODLIFY_DATABASE_USER:root}
-    password: ${NODLIFY_DATABASE_PASS:pass}
-    name: nodlify
-    hikari:
-      maximum-pool-size: 20
-
-  flyway:
-    enabled: true
-    baseline-on-migrate: true
-    validate-on-migrate: true
-    schemas: nodlify
-    default-schema: nodlify
-    create-schemas: true
-
-  modulith:
-    events:
-      jdbc:
-        schema: nodlify
+  liquibase:
+    change-log: classpath:db/changelog/db.changelog-master.xml
 
   web:
     error:
@@ -83,6 +54,8 @@ server:
         name: SID
 
 nodlify:
+  default:
+    frontend: false
   version: '@application.version@'
   keys:
     remember-me-key: ${NODLIFY_REMEMBER_ME_KEY:none}
@@ -93,3 +66,8 @@ nodlify:
     rate-limit-enabled: ${GEOCODING_RATE_LIMIT_ENABLED:true}
     rate-limit-max-requests: ${GEOCODING_RATE_LIMIT_MAX_REQUESTS:60}
     rate-limit-window: ${GEOCODING_RATE_LIMIT_WINDOW:1m}
+
+gg:
+  jte:
+    # to be replaced with src/resources/templates
+    template-location: src/resources/jte
