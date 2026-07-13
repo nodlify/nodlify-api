@@ -3,7 +3,7 @@ plugins {
     id 'org.springframework.boot' version '4.1.0'
     id 'io.spring.dependency-management' version '1.1.7'
     id 'com.github.ben-manes.versions' version '0.54.0'
-    id 'org.hibernate.orm' version '7.4.2.Final'
+    id 'org.hibernate.orm' version '7.4.5.Final'
     id 'tailwind-conventions'
     id 'jacoco'
 //	id 'org.graalvm.buildtools.native' version '0.10.6'
