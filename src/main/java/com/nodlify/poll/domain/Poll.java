@@ -12,6 +12,7 @@ import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.Instant;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -38,7 +39,9 @@ public class Poll {
 
     private Instant votingDeadline;
 
-    private boolean requireParticipantNames = true;
+    @Enumerated(EnumType.STRING)
+    @Column(name = "status")
+    private PollStatus manualStatus;
 
     @OneToOne(cascade = ALL, orphanRemoval = true)
     @JoinColumn(name = "location_id", referencedColumnName = "id")
@@ -76,10 +79,9 @@ public class Poll {
         return poll;
     }
 
-    public static Poll from(Title title, Description description, Instant votingDeadline, boolean requireParticipantNames) {
+    public static Poll from(Title title, Description description, Instant votingDeadline) {
         var poll = from(title, description);
         poll.votingDeadline = votingDeadline;
-        poll.requireParticipantNames = requireParticipantNames;
         return poll;
     }
 
@@ -110,11 +112,44 @@ public class Poll {
         options.removeIf(option -> option.getId().equals(optionId));
     }
 
-    public void addParticipant(Participant participant) {
+    public Participant addParticipant(Participant participant) {
+        var email = participant.getEmail();
+        if (email != null) {
+            var existing = participants.stream()
+                    .filter(item -> email.equals(item.getEmail()))
+                    .findFirst();
+            if (existing.isPresent()) {
+                return existing.get();
+            }
+        }
         participants.add(participant);
+        return participant;
     }
 
     public void addLocation(GeoLocation geoLocation) {
         this.location = geoLocation;
+    }
+
+    public void changeStatus(PollStatus status) {
+        this.manualStatus = status == PollStatus.VOTING ? null : status;
+    }
+
+    public PollStatus status(Instant now) {
+        if (manualStatus != null) {
+            return manualStatus;
+        }
+        return isPastDeadline(now) ? PollStatus.CLOSED : PollStatus.VOTING;
+    }
+
+    private boolean isPastDeadline(Instant now) {
+        var deadline = votingDeadline != null ? votingDeadline : lastOptionEnd();
+        return deadline != null && now.isAfter(deadline);
+    }
+
+    private Instant lastOptionEnd() {
+        return options.stream()
+                .map(Option::getEndAt)
+                .max(Comparator.naturalOrder())
+                .orElse(null);
     }
 }

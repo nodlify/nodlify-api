@@ -19,23 +19,23 @@ record PollResponse(
         String title,
         String description,
         Instant votingDeadline,
-        boolean requireParticipantNames,
         String organizer,
         LocationData location,
+        String status,
         List<ParticipantData> participants,
         List<OptionGroup> optionGroups
 ) {
 
-    static PollResponse from(PollData pollData) {
+    static PollResponse from(PollData pollData, String organizer) {
         var optionGroups = toOptionGroups(pollData.options());
         return new PollResponse(
                 pollData.id(),
                 pollData.title(),
                 pollData.description(),
                 pollData.votingDeadline(),
-                pollData.requireParticipantNames(),
-                pollData.organizer(),
+                organizer,
                 pollData.location(),
+                pollData.status(),
                 pollData.participants(),
                 optionGroups
         );

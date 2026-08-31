@@ -10,7 +10,7 @@
       )}"
 >
 <head>
-    <title>Nodlify – Pick a time together.</title>
+    <title th:text="#{index.pageTitle}">Nodlify – Pick a time together.</title>
 </head>
 <body>
 
@@ -21,8 +21,8 @@
     <div class="wrap nav-inner">
         <a href="/"><span class="logo">nodlify<span class="dot">.</span></span></a>
         <div class="nav-cta">
-            <a href="/login" class="small text-[var(--muted)]">Sign in</a>
-            <a href="/create-poll" class="btn btn-sm">Create a poll <span class="arrow">→</span></a>
+            <a href="/login" class="small text-[var(--muted)]" th:text="#{register.signIn}">Sign in</a>
+            <a href="/create-poll" class="btn btn-sm"><span th:text="#{index.createPoll}">Create a poll</span> <span class="arrow">→</span></a>
         </div>
     </div>
 </header>
@@ -33,19 +33,19 @@
         <div class="wrap">
             <div class="hero-grid">
                 <div class="hero-left">
-                    <span class="eyebrow">Group scheduling made simple · v0.2</span>
+                    <span class="eyebrow" th:text="#{index.hero.eyebrow}">Group scheduling made simple · v0.2</span>
                     <h1 class="display hero-headline">
-                        Find a time<br/>
-                        <span class="inline-block">that works for</span> <span class="accent">everyone</span>.
+                        <span th:text="#{index.hero.line1}">Find a time</span><br/>
+                        <span class="inline-block" th:text="#{index.hero.line2}">that works for</span> <span class="accent" th:text="#{index.hero.everyone}">everyone</span>.
                     </h1>
-                    <p class="lede">
+                    <p class="lede" th:text="#{index.hero.lede}">
                         Nodlify gives every group one clean link for choosing a date.
-                        Propose a few options, collect <b>yes / no / maybe</b> in one tap, and confirm the time
+                        Propose a few options, collect yes / no / maybe in one tap, and confirm the time
                         that works best.
                     </p>
                     <div class="hero-cta flex-col items-start gap-2">
-                        <a href="/create-poll" class="btn">Create a poll for free <span class="arrow">→</span></a>
-                        <span class="small text-[12.5px] text-[var(--muted)]">Free · no account needed</span>
+                        <a href="/create-poll" class="btn"><span th:text="#{index.hero.cta}">Create a poll for free</span> <span class="arrow">→</span></a>
+                        <span class="small text-[12.5px] text-[var(--muted)]" th:text="#{index.hero.ctaNote}">Free · no account needed</span>
                     </div>
                 </div>
 
@@ -54,16 +54,16 @@
                         <div class="poll-head">
                             <h3 class="poll-title">Team dinner — November</h3>
                             <div class="poll-meta-row">
-                                <span>8 invited</span>
+                                <span>8 <span th:text="#{index.demo.invited}">invited</span></span>
                                 <span class="dot-sep"></span>
-                                <span>4 options</span>
+                                <span>4 <span th:text="#{home.options}">options</span></span>
                                 <span class="dot-sep"></span>
                                 <span class="mono text-[11px]">nodlify.com/p/4hT9k</span>
                             </div>
                         </div>
                         <div class="poll-grid">
                             <div class="poll-grid-header [grid-template-columns:1.3fr_1fr_1fr_1fr_1fr]">
-                                <div class="poll-cell-name header">Who</div>
+                                <div class="poll-cell-name header" th:text="#{index.demo.who}">Who</div>
                                 <div class="poll-cell-opt">
                                     <div class="opt-date">Nov 18</div>
                                     <div class="opt-time">18:00</div>
@@ -108,11 +108,11 @@
                         </div>
                         <div class="poll-foot">
                             <div class="totals">
-                                <span><b>14</b> yes</span>
-                                <span><b>3</b> maybe</span>
-                                <span><b>3</b> no</span>
+                                <span><b>14</b> <span th:text="#{index.demo.yes}">yes</span></span>
+                                <span><b>3</b> <span th:text="#{index.demo.maybe}">maybe</span></span>
+                                <span><b>3</b> <span th:text="#{index.demo.no}">no</span></span>
                             </div>
-                            <span class="mono text-[11px] text-[var(--muted)]">63% responded</span>
+                            <span class="mono text-[11px] text-[var(--muted)]">63% <span th:text="#{index.demo.responded}">responded</span></span>
                         </div>
                     </div>
                 </div>
@@ -123,46 +123,46 @@
     <section id="pricing">
         <div class="wrap">
             <div class="section-head">
-                <span class="eyebrow">Pricing · no surprises</span>
-                <h2 class="h2">Free for most things. <i>Pro</i> for the rest.</h2>
+                <span class="eyebrow" th:text="#{index.pricing.eyebrow}">Pricing · no surprises</span>
+                <h2 class="h2"><span th:text="#{index.pricing.headingPre}">Free for most things.</span> <i>Pro</i> <span th:text="#{index.pricing.headingPost}">for the rest.</span></h2>
             </div>
             <div class="pricing-grid">
                 <div class="price-card">
                     <div>
-                        <div class="name">Free</div>
-                        <h3 class="amount">€0<span class="per">/forever</span></h3>
+                        <div class="name" th:text="#{index.price.free}">Free</div>
+                        <h3 class="amount">€0<span class="per" th:text="#{index.price.free.per}">/forever</span></h3>
                     </div>
-                    <p class="summary">Everything you need to coordinate small groups. No account required for
+                    <p class="summary" th:text="#{index.price.free.summary}">Everything you need to coordinate small groups. No account required for
                         participants.</p>
                     <ul>
-                        <li>Unlimited polls</li>
-                        <li>Up to 30 participants per poll</li>
-                        <li>Yes / No / Maybe voting</li>
-                        <li>Location with map preview</li>
-                        <li>One‑click .ics calendar export</li>
+                        <li th:text="#{index.price.free.f1}">Unlimited polls</li>
+                        <li th:text="#{index.price.free.f2}">Up to 30 participants per poll</li>
+                        <li th:text="#{index.price.free.f3}">Yes / No / Maybe voting</li>
+                        <li th:text="#{index.price.free.f4}">Location with map preview</li>
+                        <li th:text="#{index.price.free.f5}">One‑click .ics calendar export</li>
                     </ul>
                     <div class="price-cta">
-                        <a href="/create-poll" class="btn btn-ghost">Start free <span class="arrow">→</span></a>
+                        <a href="/create-poll" class="btn btn-ghost"><span th:text="#{index.price.free.cta}">Start free</span> <span class="arrow">→</span></a>
                     </div>
                 </div>
                 <div class="price-card featured">
-                    <span class="tag">For teams</span>
+                    <span class="tag" th:text="#{index.price.tag}">For teams</span>
                     <div>
                         <div class="name">Pro</div>
-                        <h3 class="amount">€6<span class="per">/month per organizer</span></h3>
+                        <h3 class="amount">€6<span class="per" th:text="#{index.price.pro.per}">/month per organizer</span></h3>
                     </div>
-                    <p class="summary">For people who schedule a lot. Adds calendar integrations, custom domains, and a
+                    <p class="summary" th:text="#{index.price.pro.summary}">For people who schedule a lot. Adds calendar integrations, custom domains, and a
                         real API.</p>
                     <ul>
-                        <li>Everything in Free</li>
-                        <li>Unlimited participants</li>
-                        <li>Google &amp; Outlook calendar sync</li>
-                        <li>Custom subdomain (yours.nodlify.com)</li>
-                        <li>Full REST API + webhooks</li>
-                        <li>Priority email support</li>
+                        <li th:text="#{index.price.pro.f1}">Everything in Free</li>
+                        <li th:text="#{index.price.pro.f2}">Unlimited participants</li>
+                        <li th:text="#{index.price.pro.f3}">Google &amp; Outlook calendar sync</li>
+                        <li th:text="#{index.price.pro.f4}">Custom subdomain (yours.nodlify.com)</li>
+                        <li th:text="#{index.price.pro.f5}">Full REST API + webhooks</li>
+                        <li th:text="#{index.price.pro.f6}">Priority email support</li>
                     </ul>
                     <div class="price-cta">
-                        <a href="/register" class="btn">Try Pro free for 14 days <span class="arrow">→</span></a>
+                        <a href="/register" class="btn"><span th:text="#{index.price.pro.cta}">Try Pro free for 14 days</span> <span class="arrow">→</span></a>
                     </div>
                 </div>
             </div>
@@ -171,19 +171,19 @@
 
     <section class="cta-block">
         <div class="wrap">
-            <span class="eyebrow mb-6 inline-flex">Ready when your group is</span>
+            <span class="eyebrow mb-6 inline-flex" th:text="#{index.cta.eyebrow}">Ready when your group is</span>
             <h2 class="h2 mt-4 text-[length:var(--hero-size)]">
-                Stop chasing replies.<br/>
-                <i class="text-[var(--yes)]">Choose the time.</i>
+                <span th:text="#{index.cta.headingPre}">Stop chasing replies.</span><br/>
+                <i class="text-[var(--yes)]" th:text="#{index.cta.headingAccent}">Choose the time.</i>
             </h2>
-            <p class="lede mt-6">
+            <p class="lede mt-6" th:text="#{index.cta.lede}">
                 Create your first poll in under 30 seconds. No credit card, no signup wall.
             </p>
             <div class="mt-8 flex flex-wrap justify-center gap-3">
-                <a href="/create-poll" class="btn">Create a poll <span class="arrow">→</span></a>
-                <a href="#" class="btn btn-ghost">Read the docs</a>
+                <a href="/create-poll" class="btn"><span th:text="#{index.createPoll}">Create a poll</span> <span class="arrow">→</span></a>
+                <a href="#" class="btn btn-ghost" th:text="#{index.cta.docs}">Read the docs</a>
             </div>
-            <p class="small mt-6">Free forever for groups up to 30 · Open source under MIT</p>
+            <p class="small mt-6" th:text="#{index.cta.foot}">Free forever for groups up to 30 · Open source under MIT</p>
         </div>
     </section>
 

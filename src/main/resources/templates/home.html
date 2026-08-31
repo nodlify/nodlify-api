@@ -10,7 +10,7 @@
       )}"
 >
 <head>
-    <title>Home · Nodlify</title>
+    <title th:text="|#{home.title} · Nodlify|">Home · Nodlify</title>
 </head>
 <body>
 
@@ -20,17 +20,21 @@
        filter: 'active',
        sort: 'recent',
        displayName: '',
-       polls: [
-         { id: '4hT9k', title: 'Q4 planning offsite',          status: 'active',  options: 4, voted: 6,  invited: 8,  avatars: ['AK','MD','LW','TL','SR','JL'] },
-         { id: '9mP2x', title: 'Team dinner — November',       status: 'active',  options: 4, voted: 5,  invited: 8,  avatars: ['AK','MD','LW','SR','PS'] },
-         { id: '2nB7r', title: 'Design review — next sprint',  status: 'decided', options: 5, voted: 7,  invited: 7,  avatars: ['AK','MD','LW','TL','SR','JL','HB'] },
-         { id: '8kT4w', title: 'Founders coffee chat',         status: 'active',  options: 3, voted: 2,  invited: 4,  avatars: ['AK','SR'] },
-         { id: '5jR3v', title: 'Open source sync (monthly)',   status: 'decided', options: 4, voted: 11, invited: 12, avatars: ['AK','MD','LW','TL','SR','JL','PS','HB'] },
-         { id: '1aB6c', title: 'Q1 OKR workshop',              status: 'active',  options: 3, voted: 1,  invited: 6,  avatars: ['SR'] },
-         { id: '7gH9z', title: 'Eng all‑hands — October',      status: 'closed',  options: 4, voted: 14, invited: 18, avatars: ['AK','MD','LW','TL','SR'] }
-       ],
+       polls: [],
+       loading: true,
+       deletingId: null,
        get filtered() {
-         return this.filter === 'all' ? this.polls : this.polls.filter(p => p.status === this.filter);
+         const polls = this.filter === 'all' ? this.polls : this.polls.filter(p => p.status === this.filter);
+         return [...polls].sort((a, b) => {
+           if (this.sort === 'participants') return b.participants - a.participants;
+           if (this.sort === 'closing') {
+             if (!a.closesAt) return 1;
+             if (!b.closesAt) return -1;
+             return new Date(a.closesAt) - new Date(b.closesAt);
+           }
+           if (this.sort === 'alpha') return a.title.localeCompare(b.title);
+           return new Date(b.createdAt) - new Date(a.createdAt);
+         });
        },
        get counts() {
          return {
@@ -40,18 +44,22 @@
            closed:  this.polls.filter(p => p.status === 'closed').length
          };
        },
-       get totalVoters() { return this.polls.reduce((s, p) => s + p.voted, 0); },
-       get decisionsThisMonth() { return this.polls.filter(p => p.status === 'decided').length; },
+       get totalParticipants() { return this.polls.reduce((sum, poll) => sum + poll.participants, 0); },
+       get summary() {
+         return this.$store.i18n.t('home.summary')
+           .replace('{active}', this.counts.active)
+           .replace('{participants}', this.totalParticipants);
+       },
        greeting() {
          const h = new Date().getHours();
-         if (h < 5)  return 'Still up';
-         if (h < 12) return 'Good morning';
-         if (h < 17) return 'Good afternoon';
-         return 'Good evening';
+         if (h < 5)  return this.$store.i18n.t('home.greeting.lateNight');
+         if (h < 12) return this.$store.i18n.t('home.greeting.morning');
+         if (h < 17) return this.$store.i18n.t('home.greeting.afternoon');
+         return this.$store.i18n.t('home.greeting.evening');
        },
        async loadUserInfo() {
          try {
-           const res = await fetch('/api/v1/userinfo', {
+           const res = await fetch('/api/v1/user', {
              headers: { 'Accept': 'application/json' },
              credentials: 'same-origin',
            });
@@ -59,6 +67,47 @@
            const user = await res.json();
            this.displayName = user.displayName || '';
          } catch (_) {}
+       },
+       initials(name) {
+         const value = (name || '').trim();
+         if (!value) return '?';
+         const parts = value.split(/\s+/);
+         if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+         return parts.slice(0, 2).map(p => p.charAt(0).toUpperCase()).join('');
+       },
+       pollUrl(pollId) {
+         return window.location.origin + '/vote/' + pollId;
+       },
+       closingDate(poll) {
+         if (poll.votingDeadline) return poll.votingDeadline;
+         const endDates = (poll.options || []).map(option => option.endAt).filter(Boolean);
+         return endDates.length ? endDates.sort().at(-1) : null;
+       },
+       async loadPolls() {
+         try {
+           const res = await fetch('/api/v1/polls', {
+             headers: { 'Accept': 'application/json' },
+             credentials: 'same-origin',
+           });
+           if (!res.ok) return;
+           const data = await res.json();
+           const statusMap = { VOTING: 'active', CLOSED: 'closed', DECIDED: 'decided' };
+           this.polls = data.map(p => {
+             const participants = p.participants || [];
+             return {
+               id: p.id,
+               title: p.title,
+               status: statusMap[p.status] || 'active',
+               options: (p.options || []).length,
+               participants: participants.length,
+               avatars: participants.slice(0, 6).map(x => this.initials(x.name)),
+               createdAt: p.createdAt,
+               closesAt: this.closingDate(p),
+             };
+           });
+         } catch (_) {} finally {
+           this.loading = false;
+         }
        },
        csrfHeaders() {
          const token = document.querySelector('meta[name=_csrf]')?.content;
@@ -82,14 +131,34 @@
              title: data.title,
              status: 'active',
              options: (data.options || []).length,
-             voted: 0,
-             invited: 0,
+             participants: 0,
              avatars: [],
+             createdAt: data.createdAt,
+             closesAt: this.closingDate(data),
            });
          } catch (_) {}
+       },
+       async removePoll(poll) {
+         const message = this.$store.i18n.t('home.delete.confirm').replace('{title}', poll.title);
+         if (!window.confirm(message)) return;
+
+         this.deletingId = poll.id;
+         try {
+           const res = await fetch('/api/v1/polls/' + encodeURIComponent(poll.id), {
+             method: 'DELETE',
+             headers: this.csrfHeaders(),
+             credentials: 'same-origin',
+           });
+           if (!res.ok) throw new Error('delete failed');
+           this.polls = this.polls.filter(item => item.id !== poll.id);
+         } catch (_) {
+           window.alert(this.$store.i18n.t('home.delete.error'));
+         } finally {
+           this.deletingId = null;
+         }
        }
      }"
-     x-init="loadUserInfo()">
+     x-init="loadUserInfo(); loadPolls()">
 
     <div class="wrap">
         <div class="home-header">
@@ -97,101 +166,85 @@
                 <h1>
                     <span x-text="greeting()"></span><span x-show="displayName">, <i class="text-[var(--yes)]"
                                                                                      x-text="displayName"></i></span>.
-                    <span class="h1-sub">
-            You have <span x-text="counts.active"></span> active
-            <span x-text="counts.active === 1 ? 'poll' : 'polls'"></span> ·
-            <span x-text="totalVoters"></span> votes collected this week
-          </span>
+                    <span class="h1-sub" x-text="summary"></span>
                 </h1>
             </div>
-            <a href="/create-poll" class="btn">Create a new poll <span class="arrow">→</span></a>
+            <a href="/create-poll" class="btn"><span th:text="#{home.createPoll}">Create a new poll</span> <span class="arrow">→</span></a>
         </div>
 
-        <!--/* TODO: add stats
-        <div class="home-stats editorial">
-            <div class="stat-card">
-                <span class="stat-label">Active polls</span>
-                <span class="stat-value" x-text="counts.active"></span>
-                <span class="stat-trend up">+2 this week</span>
-            </div>
-            <div class="stat-card">
-                <span class="stat-label">Decisions made</span>
-                <span class="stat-value" x-text="decisionsThisMonth"></span>
-                <span class="stat-trend">this month</span>
-            </div>
-            <div class="stat-card">
-                <span class="stat-label">Total participants</span>
-                <span class="stat-value">42</span>
-                <span class="stat-trend up">+11 vs Oct</span>
-            </div>
-        </div>
-        */-->
         <div class="home-filters">
             <div class="filter-tabs">
-                <template
-                        x-for="tab in [{id:'all',label:'All'},{id:'active',label:'Voting'},{id:'decided',label:'Decided'},{id:'closed',label:'Closed'}]"
-                        :key="tab.id">
-                    <button class="filter-tab" :class="{ active: filter === tab.id }" @click="filter = tab.id">
-                        <span x-text="tab.label"></span><span class="count" x-text="counts[tab.id]"></span>
+                <template x-for="tabId in ['all','active','decided','closed']" :key="tabId">
+                    <button class="filter-tab" :class="{ active: filter === tabId }" @click="filter = tabId">
+                        <span x-text="$store.i18n.t('home.filter.' + tabId)"></span><span class="count" x-text="counts[tabId]"></span>
                     </button>
                 </template>
             </div>
             <select class="sort-select" x-model="sort">
-                <option value="recent">Sort: Most recent</option>
-                <option value="participants">Sort: Most participants</option>
-                <option value="closing">Sort: Closing soon</option>
-                <option value="alpha">Sort: A–Z</option>
+                <option value="recent" th:text="#{home.sort.recent}">Sort: Most recent</option>
+                <option value="participants" th:text="#{home.sort.participants}">Sort: Most participants</option>
+                <option value="closing" th:text="#{home.sort.closing}">Sort: Closing soon</option>
+                <option value="alpha" th:text="#{home.sort.alpha}">Sort: A–Z</option>
             </select>
         </div>
 
         <div class="poll-list">
             <div class="poll-list-header">
-                <span>Poll</span>
-                <span>Status</span>
-                <span>Participants</span>
+                <span th:text="#{home.col.poll}">Poll</span>
+                <span th:text="#{home.col.status}">Status</span>
+                <span th:text="#{home.col.participants}">Participants</span>
                 <span></span>
             </div>
 
-            <template x-if="filtered.length === 0">
+            <template x-if="!loading && filtered.length === 0">
                 <div class="empty-state">
-                    <h3 class="empty-title">No polls here yet</h3>
-                    <p>Polls you create will show up in this view.</p>
-                    <a href="/create-poll" class="btn">Create your first poll <span class="arrow">→</span></a>
+                    <h3 class="empty-title" th:text="#{home.empty.title}">No polls here yet</h3>
+                    <p th:text="#{home.empty.text}">Polls you create will show up in this view.</p>
+                    <a href="/create-poll" class="btn"><span th:text="#{home.empty.cta}">Create your first poll</span> <span class="arrow">→</span></a>
                 </div>
             </template>
 
             <template x-for="poll in filtered" :key="poll.id">
                 <div class="poll-row">
                     <div class="poll-row-title">
-                        <span class="title" x-text="poll.title"></span>
+                        <a class="title" :href="'/vote/' + poll.id" x-text="poll.title"></a>
                         <span class="meta">
-              <span x-text="'nodlify.com/p/' + poll.id"></span>
+              <span x-text="pollUrl(poll.id)"></span>
               <template x-if="poll.options > 0">
-                <span><span class="sep">·</span> <span x-text="poll.options + ' options'"></span></span>
+                <span><span class="sep">·</span> <span x-text="poll.options + ' ' + $store.i18n.t('home.options')"></span></span>
               </template>
             </span>
                     </div>
 
                     <span class="status-badge" :class="poll.status">
             <template x-if="poll.status === 'active'"><span class="pulse"></span></template>
-            <span x-text="{ active: 'Voting', decided: 'Decided', closed: 'Closed', draft: 'Draft' }[poll.status] || poll.status"></span>
+            <span x-text="$store.i18n.t('home.status.' + poll.status)"></span>
           </span>
 
                     <div class="participants-stack">
                         <template x-for="(a, i) in poll.avatars.slice(0, 3)" :key="i">
                             <span class="avatar" x-text="a"></span>
                         </template>
-                        <template x-if="poll.invited - Math.min(poll.avatars.length, 3) > 0">
-                            <span class="more" x-text="'+' + (poll.invited - Math.min(poll.avatars.length, 3))"></span>
+                        <template x-if="poll.participants - Math.min(poll.avatars.length, 3) > 0">
+                            <span class="more" x-text="'+' + (poll.participants - Math.min(poll.avatars.length, 3))"></span>
                         </template>
                     </div>
 
                     <div class="row-actions">
-                        <button class="row-action" aria-label="Duplicate poll" title="Duplicate"
-                                @click="duplicate(poll)">
+                        <a class="row-action" :href="'/poll/' + poll.id"
+                           th:attr="aria-label=#{home.edit},title=#{home.edit}">
+                            <img th:src="@{/icons/settings.svg}" width="18" height="18" alt="" aria-hidden="true">
+                        </a>
+                        <button class="row-action" @click.stop="duplicate(poll)"
+                                th:attr="aria-label=#{home.duplicate},title=#{home.duplicate}">
                             <img th:src="@{/icons/duplicate.svg}" width="18" height="18" alt="" aria-hidden="true">
                         </button>
-                        <button class="row-action" aria-label="More" title="More">⋯</button>
+                        <button class="row-action row-action-delete"
+                                @click.stop="removePoll(poll)"
+                                :disabled="deletingId === poll.id"
+                                th:attr="aria-label=#{home.delete},title=#{home.delete}">
+                            <span aria-hidden="true" x-text="deletingId === poll.id ? '…' : '×'"></span>
+                        </button>
                     </div>
                 </div>
             </template>

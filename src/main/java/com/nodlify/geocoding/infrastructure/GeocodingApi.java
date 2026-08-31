@@ -13,7 +13,7 @@ import java.util.List;
 
 
 @RestController
-@RequestMapping("/api/v1/geocoding")
+@RequestMapping("/api/v1/locations")
 @RequiredArgsConstructor
 @Tag(name = "Public - Geocoding", description = "Address search and reverse geocoding proxy")
 class GeocodingApi {

@@ -1,4 +1,6 @@
-package com.nodlify.iam.domain;
+package com.nodlify.iam.application;
+
+import com.nodlify.iam.domain.User;
 
 import java.util.List;
 

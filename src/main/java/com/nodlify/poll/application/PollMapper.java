@@ -4,6 +4,7 @@ import com.nodlify.poll.domain.Option;
 import com.nodlify.poll.domain.Participant;
 import com.nodlify.poll.domain.Poll;
 
+import java.time.Instant;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Set;
@@ -24,12 +25,12 @@ final class PollMapper {
                 valueOrNull(poll.getTitle()),
                 valueOrNull(poll.getDescription()),
                 poll.getVotingDeadline(),
-                poll.isRequireParticipantNames(),
                 toParticipants(poll.getParticipants()),
                 toOptionData(poll.getOptions()),
                 poll.getCreatedAt(),
                 poll.getCreatedBy(),
-                LocationData.from(poll.getLocation())
+                LocationData.from(poll.getLocation()),
+                poll.status(Instant.now()).name()
         );
     }
 

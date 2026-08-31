@@ -1,5 +1,6 @@
 package com.nodlify.iam.infrastructure
 
+import com.nodlify.iam.application.UserData
 import com.nodlify.iam.application.UserUseCase
 import org.springframework.security.authentication.AnonymousAuthenticationToken
 import org.springframework.security.core.authority.SimpleGrantedAuthority
@@ -8,14 +9,14 @@ import spock.lang.Specification
 import static com.nodlify.test.fixture.AuthenticationFixture.authenticatedUser
 import static com.nodlify.test.fixture.UserFixture.*
 
-class UserInfoApiSpec extends Specification {
+class CurrentUserApiSpec extends Specification {
 
     def userUseCase = Mock(UserUseCase)
-    def userProfileApi = new UserInfoApi(userUseCase)
+    def userProfileApi = new CurrentUserApi(userUseCase)
 
     def "should return no content when user is not authenticated"() {
         when:
-        def response = userProfileApi.getUserInfo(null)
+        def response = userProfileApi.getCurrentUser(null)
 
         then:
         response.statusCode.value() == 204
@@ -30,7 +31,7 @@ class UserInfoApiSpec extends Specification {
         )
 
         when:
-        def response = userProfileApi.getUserInfo(authentication)
+        def response = userProfileApi.getCurrentUser(authentication)
 
         then:
         response.statusCode.value() == 204
@@ -39,13 +40,14 @@ class UserInfoApiSpec extends Specification {
     def "should return user info for authenticated user"() {
         given:
         def user = john()
+        def userData = UserData.from(user)
         def authentication = authenticatedUser()
 
         when:
-        def response = userProfileApi.getUserInfo(authentication)
+        def response = userProfileApi.getCurrentUser(authentication)
 
         then:
-        1 * userUseCase.getUserByEmail(JOHN_EMAIL) >> user
+        1 * userUseCase.getUserByEmail(JOHN_EMAIL) >> userData
 
         and:
         response.statusCode.value() == 200

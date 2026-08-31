@@ -2,7 +2,6 @@ package com.nodlify.iam.application;
 
 
 import com.nodlify.iam.domain.DomainUrl;
-import com.nodlify.iam.domain.User;
 
 import java.util.Optional;
 
@@ -16,5 +15,5 @@ public interface ApplicationSetupUseCase {
 
     void completeSetup();
 
-    void setupAdmin(User user);
+    void setupAdmin(CreateUserCommand command);
 }

@@ -646,3 +646,26 @@
   .cp-bottom-inner { height: auto; padding: 12px 0; gap: 8px; flex-direction: column; align-items: stretch; }
   .cp-bottom-inner .btn { width: 100%; justify-content: center; }
 }
+.poll-edit-notice {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  padding: 12px 14px;
+  border: 0.5px solid var(--line);
+  border-left: 3px solid var(--yes);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--yes-soft) 28%, #fff);
+  color: var(--muted);
+  font-size: 13px;
+}
+.poll-edit-notice strong {
+  color: var(--ink);
+  white-space: nowrap;
+}
+@media (max-width: 600px) {
+  .poll-edit-notice {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 3px;
+  }
+}

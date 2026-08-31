@@ -8,7 +8,6 @@ trait PollApiTrait {
     private static String NEW_TITLE = "new title"
     private static String NEW_DESCRIPTION = "new description"
     private static Instant VOTING_DEADLINE = Instant.parse("2026-06-15T00:00:00Z")
-    private static boolean REQUIRE_PARTICIPANT_NAMES = true
 
     String title() {
         NEW_TITLE
@@ -20,10 +19,6 @@ trait PollApiTrait {
 
     Instant votingDeadline() {
         VOTING_DEADLINE
-    }
-
-    boolean requireParticipantNames() {
-        REQUIRE_PARTICIPANT_NAMES
     }
 
     CreateOptionRequest createOptionRequest() {
@@ -45,8 +40,7 @@ trait PollApiTrait {
         new CreatePollRequest(
                 title: NEW_TITLE,
                 description: NEW_DESCRIPTION,
-                votingDeadline: VOTING_DEADLINE,
-                requireParticipantNames: REQUIRE_PARTICIPANT_NAMES
+                votingDeadline: VOTING_DEADLINE
         )
     }
 }

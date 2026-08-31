@@ -3,7 +3,6 @@ package com.nodlify.iam.application;
 import com.nodlify.iam.domain.ApplicationSetup;
 import com.nodlify.iam.domain.ApplicationSetupRepository;
 import com.nodlify.iam.domain.DomainUrl;
-import com.nodlify.iam.domain.User;
 import lombok.RequiredArgsConstructor;
 import org.jspecify.annotations.NonNull;
 import org.springframework.cache.annotation.CacheEvict;
@@ -12,8 +11,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Optional;
-
-import static com.nodlify.iam.domain.Authority.ADMIN;
 
 
 @Service
@@ -36,9 +33,8 @@ class ApplicationSetupService implements ApplicationSetupUseCase {
 
     @Override
     @Transactional
-    public void setupAdmin(User user) {
-        user.addAuthority(ADMIN);
-        userUseCase.createUser(user);
+    public void setupAdmin(CreateUserCommand command) {
+        userUseCase.createAdmin(command);
     }
 
     @Override

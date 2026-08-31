@@ -22,7 +22,7 @@ class VoteService implements VoteUseCase {
     private final VoteRepository repository;
 
     @Override
-    @CacheEvict(key = "#command.pollId().value()")
+    @CacheEvict(key = "#command.pollId().getValue()")
     public void castVote(CastVoteCommand command) {
         var vote = new Vote()
                 .with(new Vote.VoteId(command.participantId(), command.OptionId()))
@@ -33,7 +33,7 @@ class VoteService implements VoteUseCase {
 
     @Override
     @Transactional(readOnly = true)
-    @Cacheable(key = "#pollId.value()")
+    @Cacheable(key = "#pollId.getValue()")
     public List<VoteData> getVotesBy(Identifier pollId) {
         return repository.findByPollId(pollId).stream()
                 .map(VoteData::from)

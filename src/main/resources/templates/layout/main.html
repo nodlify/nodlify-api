@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en"
+      th:lang="${#locale.language}"
       xmlns:th="http://www.thymeleaf.org"
       th:fragment="layout(title, header, content, footer, scripts)"
       th:with="
@@ -15,6 +16,23 @@
     <th:block th:replace="${title}"/>
     <meta name="description"
           content="Group scheduling, with consent. Propose times, collect yes/no/maybe in one tap, lock the best slot. Free, open source, no ads."/>
+    <script>
+        document.addEventListener('alpine:init', () => {
+            Alpine.store('i18n', {
+                dict: {},
+                t(key) {
+                    return this.dict[key] ?? key;
+                }
+            });
+            fetch('/i18n/' + (document.documentElement.lang || 'en') + '.json')
+                .then(response => response.ok ? response.json() : {})
+                .then(dict => {
+                    Alpine.store('i18n').dict = dict;
+                })
+                .catch(() => {
+                });
+        });
+    </script>
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3/dist/cdn.min.js"></script>
 
     <link rel="preconnect" href="https://fonts.googleapis.com">

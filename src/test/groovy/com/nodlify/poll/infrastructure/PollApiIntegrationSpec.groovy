@@ -1,5 +1,8 @@
 package com.nodlify.poll.infrastructure
 
+import com.nodlify.iam.application.UserData
+import com.nodlify.iam.application.UserUseCase
+import com.nodlify.iam.domain.UserNotFoundException
 import com.nodlify.poll.application.PollUseCaseTestConfig
 import com.nodlify.poll.domain.Description
 import com.nodlify.poll.domain.Poll
@@ -22,11 +25,22 @@ class PollApiIntegrationSpec extends Specification implements PollApiTrait {
     def pollUseCase = PollUseCaseTestConfig.pollUseCase()
 
     @Subject
-    def controller = new PollApi(pollUseCase)
+    def userUseCase = Mock(UserUseCase)
+    def controller = new PollApi(pollUseCase, userUseCase)
 
     def "should get poll"() {
         given:
         setupTestData()
+        def organizerEmail = "owner@example.com"
+        def poll = PollUseCaseTestConfig.repository.findById(Identifier.of(pollId)).get()
+        poll.@createdBy = organizerEmail
+        PollUseCaseTestConfig.repository.save(poll)
+        userUseCase.getUserByEmail(organizerEmail) >> new UserData(
+                "owner-id",
+                organizerEmail,
+                "Poll Owner",
+                ["USER"]
+        )
 
         when:
         def response = controller.getPoll(pollId)
@@ -36,6 +50,25 @@ class PollApiIntegrationSpec extends Specification implements PollApiTrait {
 
         and:
         response.body.id() == pollId
+        response.body.organizer() == "Poll Owner"
+    }
+
+    def "should use organizer email when user profile is missing"() {
+        given:
+        setupTestData()
+        def organizerEmail = "missing-owner@example.com"
+        def poll = PollUseCaseTestConfig.repository.findById(Identifier.of(pollId)).get()
+        poll.@createdBy = organizerEmail
+        PollUseCaseTestConfig.repository.save(poll)
+        userUseCase.getUserByEmail(organizerEmail) >> {
+            throw UserNotFoundException.withEmail(organizerEmail)
+        }
+
+        when:
+        def response = controller.getPoll(pollId)
+
+        then:
+        response.body.organizer() == organizerEmail
     }
 
     def "should create poll"() {
@@ -51,7 +84,6 @@ class PollApiIntegrationSpec extends Specification implements PollApiTrait {
         poll.title() == title()
         poll.description() == description()
         poll.votingDeadline() == votingDeadline()
-        poll.requireParticipantNames() == requireParticipantNames()
     }
 
     def "should delete poll"() {
@@ -100,7 +132,7 @@ class PollApiIntegrationSpec extends Specification implements PollApiTrait {
         def req = registerParticipantRequest()
 
         when:
-        controller.registerParticipant(pollId, req)
+        controller.registerParticipant(pollId, req, null)
 
         then:
         def poll = pollUseCase.getPoll(Identifier.of(pollId))
@@ -108,6 +140,35 @@ class PollApiIntegrationSpec extends Specification implements PollApiTrait {
         poll.participants().find {
             it.name() == req.toDisplayName().value
         }
+    }
+
+    def "should register authenticated user from profile without request body"() {
+        given:
+        setupTestData()
+        def email = "signed-in@example.com"
+        def auth = Mock(Authentication) {
+            isAuthenticated() >> true
+            getName() >> email
+        }
+        userUseCase.getUserByEmail(email) >> new UserData(
+                "user-id",
+                email,
+                "Signed In User",
+                ["USER"]
+        )
+
+        when:
+        def first = controller.registerParticipant(pollId, null, auth)
+        def second = controller.registerParticipant(pollId, null, auth)
+
+        then:
+        first.body.id() == second.body.id()
+        first.body.name() == "Signed In User"
+        first.body.email() == email
+
+        and:
+        pollUseCase.getPoll(Identifier.of(pollId)).participants()
+                .count { it.email() == email } == 1
     }
 
     def "should remove option"() {

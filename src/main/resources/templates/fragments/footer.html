@@ -3,63 +3,59 @@
 <body>
 
 <footer th:fragment="footerFull"
-        class="footer" x-data="{ lang: 'en' }">
+        class="footer" x-data="{}">
     <div class="wrap">
         <div class="footer-grid">
             <div class="footer-brand">
                 <span class="logo">nodlify<span class="dot">.</span></span>
-                <p class="small mt-1.5">The simplest way to pick a date together.</p>
+                <p class="small mt-1.5" th:text="#{footer.tagline}">The simplest way to pick a date together.</p>
             </div>
             <div class="footer-col">
-                <h4>Developers</h4>
+                <h4 th:text="#{footer.developers}">Developers</h4>
                 <ul>
-                    <li><a href="#">GitHub</a></li>
-                    <li><a href="#">Documentation</a></li>
-                    <li><a href="#">Self‑hosted</a></li>
+                    <li><a href="#" th:text="#{footer.github}">GitHub</a></li>
+                    <li><a href="#" th:text="#{footer.documentation}">Documentation</a></li>
+                    <li><a href="#" th:text="#{footer.selfHosted}">Self‑hosted</a></li>
                 </ul>
             </div>
             <div class="footer-col">
-                <h4>Legal</h4>
+                <h4 th:text="#{footer.legal}">Legal</h4>
                 <ul>
-                    <li><a href="#">Privacy Policy</a></li>
-                    <li><a href="#">Cookie Policy</a></li>
-                    <li><a href="#">Terms of Use</a></li>
+                    <li><a href="#" th:text="#{footer.privacy}">Privacy Policy</a></li>
+                    <li><a href="#" th:text="#{footer.cookies}">Cookie Policy</a></li>
+                    <li><a href="#" th:text="#{footer.terms}">Terms of Use</a></li>
                 </ul>
             </div>
             <div class="footer-col">
-                <h4>Language</h4>
-                <select class="lang-dropdown" x-model="lang" aria-label="Language">
-                    <option value="en">English</option>
-                    <option value="pl">Polski</option>
-                    <option value="de">Deutsch</option>
-                    <option value="es">Español</option>
-                    <option value="fr">Français</option>
+                <h4 th:text="#{footer.language}">Language</h4>
+                <select class="lang-dropdown" aria-label="Language"
+                        @change="const params = new URLSearchParams(window.location.search); params.set('lang', $event.target.value); window.location.search = params.toString();">
+                    <option value="en" th:selected="${#locale.language == 'en'}">English</option>
+                    <option value="pl" th:selected="${#locale.language == 'pl'}">Polski</option>
                 </select>
             </div>
         </div>
         <div class="footer-bottom">
-            <span>© 2026 Nodlify · GNU AGPLv3 licensed</span>
-            <span><!--/* TODO: add something here */--></span>
+            <span th:text="#{footer.copyright}">© 2026 Nodlify · GNU AGPLv3 licensed</span>
+            <span></span>
         </div>
     </div>
 </footer>
 
 <footer th:fragment="footerMinimal"
-        class="footer-min" x-data="{ lang: 'en' }">
+        class="footer-min" x-data="{}">
     <div class="wrap footer-min-inner">
         <nav class="footer-min-links">
-            <a href="#">Privacy Policy</a>
-            <a href="#">Cookie Policy</a>
-            <a href="#">Terms of Use</a>
+            <a href="#" th:text="#{footer.privacy}">Privacy Policy</a>
+            <a href="#" th:text="#{footer.cookies}">Cookie Policy</a>
+            <a href="#" th:text="#{footer.terms}">Terms of Use</a>
         </nav>
         <div class="footer-min-right">
-            <span class="footer-min-meta">© 2026 Nodlify</span>
-            <select class="lang-dropdown footer-min-lang" x-model="lang" aria-label="Language">
-                <option value="en">English</option>
-                <option value="pl">Polski</option>
-                <option value="de">Deutsch</option>
-                <option value="es">Español</option>
-                <option value="fr">Français</option>
+            <span class="footer-min-meta" th:text="#{footer.copyrightShort}">© 2026 Nodlify</span>
+            <select class="lang-dropdown footer-min-lang" aria-label="Language"
+                    @change="const params = new URLSearchParams(window.location.search); params.set('lang', $event.target.value); window.location.search = params.toString();">
+                <option value="en" th:selected="${#locale.language == 'en'}">English</option>
+                <option value="pl" th:selected="${#locale.language == 'pl'}">Polski</option>
             </select>
         </div>
     </div>

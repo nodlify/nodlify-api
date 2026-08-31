@@ -1,6 +1,8 @@
 package com.nodlify.iam.infrastructure
 
 import com.nodlify.iam.application.ApplicationSetupUseCase
+import com.nodlify.shared.domain.Property
+import com.nodlify.shared.exception.IllegalValueException
 import com.nodlify.shared.exception.InternalServerError
 import com.nodlify.test.mapper.JsonMapper
 import com.nodlify.test.type.MvcSpec
@@ -27,7 +29,7 @@ class SetupApiMvcSpec extends MvcSpec implements JsonMapper {
         def request = new SetupDomainRequest("http://localhost:8081")
 
         when:
-        def response = mvc.perform(post("/api/v1/iam/setup/domain")
+        def response = mvc.perform(post("/api/v1/setup/domain")
                 .content(toJson(request)).contentType(APPLICATION_JSON))
                 .andDo(print())
                 .andReturn()
@@ -45,7 +47,7 @@ class SetupApiMvcSpec extends MvcSpec implements JsonMapper {
         def request = new CreateUserRequest("email@email.com", "Password1", "Admin")
 
         when:
-        def response = mvc.perform(post("/api/v1/iam/setup/admin")
+        def response = mvc.perform(post("/api/v1/setup/admin")
                 .content(toJson(request)).contentType(APPLICATION_JSON))
                 .andDo(print())
                 .andReturn()
@@ -60,7 +62,7 @@ class SetupApiMvcSpec extends MvcSpec implements JsonMapper {
 
     def "should complete setup"() {
         when:
-        def response = mvc.perform(post("/api/v1/iam/setup"))
+        def response = mvc.perform(post("/api/v1/setup"))
                 .andDo(print())
                 .andReturn()
                 .getResponse()
@@ -77,13 +79,18 @@ class SetupApiMvcSpec extends MvcSpec implements JsonMapper {
         def request = new CreateUserRequest("incorrect@", "superSecretPass!", "Admin")
 
         when:
-        def response = mvc.perform(post("/api/v1/iam/setup/admin")
+        def response = mvc.perform(post("/api/v1/setup/admin")
                 .content(toJson(request)).contentType(APPLICATION_JSON))
                 .andDo(print())
                 .andReturn()
                 .getResponse()
 
         then:
+        1 * applicationSetupUseCase.setupAdmin(_) >> {
+            throw new IllegalValueException(Property.of("email", "incorrect@"), "Invalid email format")
+        }
+
+        and:
         response.status == 400
 
         and:
@@ -91,7 +98,7 @@ class SetupApiMvcSpec extends MvcSpec implements JsonMapper {
         body.title == "Validation Error"
         body.status == 400
         body.detail == "Invalid email format"
-        body.instance.contains("/api/v1/iam/setup/admin")
+        body.instance.contains("/api/v1/setup/admin")
         !body.traceId.isBlank()
 
         and:
@@ -104,7 +111,7 @@ class SetupApiMvcSpec extends MvcSpec implements JsonMapper {
 
     def "should return 500, when there was internal server error"() {
         when:
-        def response = mvc.perform(post("/api/v1/iam/setup"))
+        def response = mvc.perform(post("/api/v1/setup"))
                 .andDo(print())
                 .andReturn()
                 .getResponse()
@@ -120,7 +127,7 @@ class SetupApiMvcSpec extends MvcSpec implements JsonMapper {
         body.title == "Internal Server Error"
         body.status == 500
         body.detail == "ups... app stopped working"
-        body.instance.contains("/api/v1/iam/setup")
+        body.instance.contains("/api/v1/setup")
         !body.traceId.isBlank()
     }
 }

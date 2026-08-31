@@ -37,7 +37,7 @@ public class PollService implements PollUseCase {
             LocationDetails location,
             List<Option> options
     ) {
-        return createPoll(title, description, location, options, null, true);
+        return createPoll(title, description, location, options, null);
     }
 
     @Override
@@ -47,10 +47,9 @@ public class PollService implements PollUseCase {
             Description description,
             LocationDetails location,
             List<Option> options,
-            Instant votingDeadline,
-            boolean requireParticipantNames
+            Instant votingDeadline
     ) {
-        var poll = Poll.from(title, description, votingDeadline, requireParticipantNames);
+        var poll = Poll.from(title, description, votingDeadline);
         if (location != null) {
             poll.addLocation(GeoLocation.of(location));
         }
@@ -68,11 +67,11 @@ public class PollService implements PollUseCase {
 
     @Override
     @CacheEvict(key = "#pollId.value")
-    public PollData registerParticipant(Identifier pollId, Participant participant) {
+    public ParticipantData registerParticipant(Identifier pollId, Participant participant) {
         var poll = findPoll(pollId);
-        poll.addParticipant(participant);
+        var registered = poll.addParticipant(participant);
         repository.save(poll);
-        return PollMapper.toPollData(poll);
+        return ParticipantData.from(registered);
     }
 
     @Override
@@ -98,6 +97,15 @@ public class PollService implements PollUseCase {
     public PollData removeOption(Identifier pollId, Identifier optionId) {
         var poll = findPoll(pollId);
         poll.removeOption(optionId);
+        repository.save(poll);
+        return PollMapper.toPollData(poll);
+    }
+
+    @Override
+    @CacheEvict(key = "#pollId.value")
+    public PollData changeStatus(Identifier pollId, PollStatus status) {
+        var poll = findPoll(pollId);
+        poll.changeStatus(status);
         repository.save(poll);
         return PollMapper.toPollData(poll);
     }
